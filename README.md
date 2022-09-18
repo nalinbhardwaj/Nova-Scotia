@@ -25,6 +25,8 @@ Then, compile your circuit using `circom [file].circom --r1cs --sym --c --prime 
     - [ ] Make it work with inputs passed between each other
 - [ ] Understand and fix `z[i] = 0` breakages.
 
+The parsing and generation strongly borrows from other similar repos like [plonkit](https://github.com/Fluidex/plonkit), [ark-circom](https://github.com/gakonst/ark-circom), [zkutil](https://github.com/poma/zkutil) etc.
+
 I have never been to Nova Scotia. This repo is named Nova Scotia because there is already Tornado Cash Nova, Arbitrum Nova and Microsoft Nova, so its time we start adding suffixes to the term Nova to maximize confusion around it.
 
 Additionally, since Nova's `StepCircuit` trait is pretty much the same as Bellperson's `Circuit` trait, we can probably also use the transpilation in this repo to use Bellperson with Circom, along with its [snarkpack](https://eprint.iacr.org/2021/529) aggregation features.
