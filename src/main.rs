@@ -1,4 +1,4 @@
-use std::{fs, path::Path, time::Instant};
+use std::{env::current_dir, fs, path::Path, time::Instant};
 
 use nova_scotia::circom::{
     circuit::CircomCircuit,
@@ -14,8 +14,10 @@ type G1 = pasta_curves::pallas::Point;
 type G2 = pasta_curves::vesta::Point;
 
 fn main() {
-    let circuit_file = "/Users/nibnalin/Documents/nova-scotia/circom/test.r1cs";
-    let witness_file = "/Users/nibnalin/Documents/nova-scotia/circom/witness.wtns";
+    let root = current_dir().unwrap();
+
+    let circuit_file = root.join("circom/test.r1cs");
+    let witness_file = root.join("circom/witness.wtns");
 
     let circuit_primary = CircomCircuit {
         r1cs: load_r1cs(&circuit_file),
@@ -25,6 +27,7 @@ fn main() {
         wire_mapping: None,
         aux_offset: 1,
     };
+    println!("loaded circuit");
 
     let circuit_secondary = TrivialTestCircuit::default();
     let pp = PublicParams::<

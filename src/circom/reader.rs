@@ -4,6 +4,7 @@ use itertools::Itertools;
 use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, Read, Seek};
+use std::path::Path;
 use std::str;
 
 use crate::circom::circuit::{CircomCircuit, CircuitJson, R1CS};
@@ -15,7 +16,7 @@ type G1 = pasta_curves::pallas::Point;
 type G2 = pasta_curves::vesta::Point;
 
 /// load witness file by filename with autodetect encoding (bin or json).
-pub fn load_witness_from_file<Fr: PrimeField>(filename: &str) -> Vec<Fr> {
+pub fn load_witness_from_file<Fr: PrimeField>(filename: &Path) -> Vec<Fr> {
     if filename.ends_with("json") {
         load_witness_from_json_file::<Fr>(filename)
     } else {
@@ -24,7 +25,7 @@ pub fn load_witness_from_file<Fr: PrimeField>(filename: &str) -> Vec<Fr> {
 }
 
 /// load witness from json file by filename
-pub fn load_witness_from_json_file<Fr: PrimeField>(filename: &str) -> Vec<Fr> {
+pub fn load_witness_from_json_file<Fr: PrimeField>(filename: &Path) -> Vec<Fr> {
     let reader = OpenOptions::new()
         .read(true)
         .open(filename)
@@ -42,7 +43,7 @@ fn load_witness_from_json<Fr: PrimeField, R: Read>(reader: R) -> Vec<Fr> {
 }
 
 /// load witness from bin file by filename
-pub fn load_witness_from_bin_file<Fr: PrimeField>(filename: &str) -> Vec<Fr> {
+pub fn load_witness_from_bin_file<Fr: PrimeField>(filename: &Path) -> Vec<Fr> {
     let reader = OpenOptions::new()
         .read(true)
         .open(filename)
@@ -111,7 +112,7 @@ fn load_witness_from_bin_reader<Fr: PrimeField, R: Read>(
 }
 
 /// load r1cs file by filename with autodetect encoding (bin or json)
-pub fn load_r1cs(filename: &str) -> R1CS<<G1 as Group>::Scalar> {
+pub fn load_r1cs(filename: &Path) -> R1CS<<G1 as Group>::Scalar> {
     if filename.ends_with("json") {
         load_r1cs_from_json_file(filename)
     } else {
@@ -121,7 +122,7 @@ pub fn load_r1cs(filename: &str) -> R1CS<<G1 as Group>::Scalar> {
 }
 
 /// load r1cs from json file by filename
-fn load_r1cs_from_json_file<Fr: PrimeField>(filename: &str) -> R1CS<Fr> {
+fn load_r1cs_from_json_file<Fr: PrimeField>(filename: &Path) -> R1CS<Fr> {
     let reader = OpenOptions::new()
         .read(true)
         .open(filename)
@@ -163,7 +164,7 @@ fn load_r1cs_from_json<Fr: PrimeField, R: Read>(reader: R) -> R1CS<Fr> {
 }
 
 /// load r1cs from bin file by filename
-fn load_r1cs_from_bin_file(filename: &str) -> (R1CS<<G1 as Group>::Scalar>, Vec<usize>) {
+fn load_r1cs_from_bin_file(filename: &Path) -> (R1CS<<G1 as Group>::Scalar>, Vec<usize>) {
     let reader = OpenOptions::new()
         .read(true)
         .open(filename)
@@ -189,6 +190,8 @@ fn load_r1cs_from_bin<R: Read + Seek>(reader: R) -> (R1CS<<G1 as Group>::Scalar>
 }
 
 mod tests {
+    use std::path::Path;
+
     use pasta_curves::group::Group;
 
     use crate::circom::{
@@ -201,8 +204,10 @@ mod tests {
 
     #[test]
     fn load_sample() {
-        let circuit_file = "/Users/nibnalin/Documents/Nova/examples/circom/artifacts/main.r1cs";
-        let witness_file = "/Users/nibnalin/Documents/Nova/examples/circom/artifacts/witness.wtns";
+        let circuit_file =
+            Path::new("/Users/nibnalin/Documents/Nova/examples/circom/artifacts/main.r1cs");
+        let witness_file =
+            Path::new("/Users/nibnalin/Documents/Nova/examples/circom/artifacts/witness.wtns");
 
         let circuit = CircomCircuit {
             r1cs: load_r1cs(&circuit_file),
