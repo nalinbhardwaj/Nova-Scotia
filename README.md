@@ -20,10 +20,11 @@ Then, compile your circuit using `circom [file].circom --r1cs --sym --c --prime 
 
 ## TODO
 
-- [ ] Understand public inputs much better
+- [x] Understand public inputs much better
+- [x] Add support for public outputs
 - [ ] Build gluing logic for multi-proof aggregation
     - [ ] Make it work with inputs passed between each other
-- [ ] Understand and fix `z[i] = 0` breakages.
+- [x] Understand and fix `z[i] = 0` breakages.
 - [ ] Switch Nova to BN254/grumpkin cycle to make it work on Ethereum chain! This should be doable since Nova only needs DLOG hardness.
 
 The parsing and generation strongly borrows from other similar repos like [plonkit](https://github.com/Fluidex/plonkit), [ark-circom](https://github.com/gakonst/ark-circom), [zkutil](https://github.com/poma/zkutil) etc.

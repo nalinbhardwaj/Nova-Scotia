@@ -59,24 +59,26 @@ impl<'a, Fr: PrimeField> CircomCircuit<Fr> {
         cs: &mut CS,
         z: &[AllocatedNum<Fr>],
     ) -> Result<(), SynthesisError> {
-        println!("witness: {:?}", self.witness);
-        println!("wire_mapping: {:?}", self.wire_mapping);
-        println!("aux_offset: {:?}", self.aux_offset);
-        println!("num_inputs: {:?}", self.r1cs.num_inputs);
-        println!("num_aux: {:?}", self.r1cs.num_aux);
-        println!("num_variables: {:?}", self.r1cs.num_variables);
-        println!("constraints: {:?}", self.r1cs.constraints);
-        println!(
-            "z: {:?}",
-            z.into_iter().map(|x| x.get_value()).collect::<Vec<_>>()
-        );
+        // println!("witness: {:?}", self.witness);
+        // println!("wire_mapping: {:?}", self.wire_mapping);
+        // println!("aux_offset: {:?}", self.aux_offset);
+        // println!("num_inputs: {:?}", self.r1cs.num_inputs);
+        // println!("num_aux: {:?}", self.r1cs.num_aux);
+        // println!("num_variables: {:?}", self.r1cs.num_variables);
+        // println!("constraints: {:?}", self.r1cs.constraints);
+        // println!(
+        //     "z: {:?}",
+        //     z.into_iter().map(|x| x.get_value()).collect::<Vec<_>>()
+        // );
 
         let witness = &self.witness;
         let wire_mapping = &self.wire_mapping;
 
+        let mut vars: Vec<Variable> = vec![];
+
         for i in 1..self.r1cs.num_inputs {
-            // TODO: public inputs do not exist, so we alloc, and need to enforce from z values
-            cs.alloc(
+            // Public inputs do not exist, so we alloc, and later enforce equality from z values
+            let v = cs.alloc(
                 || format!("variable {}", i),
                 || {
                     Ok(match witness {
@@ -88,11 +90,12 @@ impl<'a, Fr: PrimeField> CircomCircuit<Fr> {
                     })
                 },
             )?;
+            vars.push(v);
         }
         for i in 0..self.r1cs.num_aux {
             // Private witness trace
-            cs.alloc(
-                || format!("aux {}", i + self.aux_offset),
+            let aux = cs.alloc(
+                || format!("aux {}", i),
                 || {
                     Ok(match witness {
                         None => Fr::one(),
@@ -103,46 +106,45 @@ impl<'a, Fr: PrimeField> CircomCircuit<Fr> {
                     })
                 },
             )?;
+            vars.push(aux);
         }
 
-        let make_index = |index| Index::Aux(index);
         let make_lc = |lc_data: Vec<(usize, Fr)>| {
-            lc_data.iter().fold(
+            let res = lc_data.iter().fold(
                 LinearCombination::<Fr>::zero(),
-                |lc: LinearCombination<Fr>, (index, coeff)| {
-                    lc + (*coeff, Variable::new_unchecked(make_index(*index)))
-                },
-            )
+                |lc: LinearCombination<Fr>, (index, coeff)| lc + (*coeff, vars[*index - 1]),
+            );
+            res
         };
         for (i, constraint) in self.r1cs.constraints.iter().enumerate() {
-            // 0 * LC = 0 must be ignored
-            if !((constraint.0.is_empty() || constraint.1.is_empty()) && constraint.2.is_empty()) {
-                cs.enforce(
-                    || format!("{}", i),
-                    |_| make_lc(constraint.0.clone()),
-                    |_| make_lc(constraint.1.clone()),
-                    |_| make_lc(constraint.2.clone()),
-                );
-            }
+            // print!(
+            //     "constraint {} {:?} \n {:?} \n {:?} \n {:?}",
+            //     i,
+            //     constraint,
+            //     make_lc(constraint.0.clone()),
+            //     make_lc(constraint.1.clone()),
+            //     make_lc(constraint.2.clone())
+            // );
+            cs.enforce(
+                || format!("{}", i),
+                |_| make_lc(constraint.0.clone()),
+                |_| make_lc(constraint.1.clone()),
+                |_| make_lc(constraint.2.clone()),
+            );
         }
 
-        // for i in 1..self.r1cs.num_inputs {
-        //     cs.enforce(|| format!("public input {}", i),
-        //         |lc| lc + z[1].get_variable(),
-        //         |lc| lc + z[0].get_variable(),
-        //         |lc| lc + Variable::new_unchecked(make_index(i)),
-        //     );
-        // }
+        for i in 1..self.r1cs.num_inputs {
+            cs.enforce(
+                || format!("{}", i),
+                |lc| lc + z[i - 1].get_variable(),
+                |lc| lc + CS::one(),
+                |lc| lc + vars[i - 1],
+            );
+        }
 
         Ok(())
     }
 }
-
-// impl<'a, Fr: PrimeField> Circuit<Fr> for CircomCircuit<Fr> {
-//     fn synthesize<CS: ConstraintSystem<Fr>>(self, cs: &mut CS) -> Result<(), SynthesisError> {
-//         self.vanilla_synthesize(cs)
-//     }
-// }
 
 impl<'a, Fr: PrimeField> StepCircuit<Fr> for CircomCircuit<Fr> {
     fn arity(&self) -> usize {

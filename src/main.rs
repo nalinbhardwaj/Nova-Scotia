@@ -5,11 +5,11 @@ use nova_scotia::circom::{
     reader::{load_r1cs, load_witness_from_file},
 };
 use nova_snark::{traits::circuit::TrivialTestCircuit, PublicParams, RecursiveSNARK};
+use pasta_curves::group::ff::PrimeField;
 use pasta_curves::{
     arithmetic::CurveAffine,
     group::{Curve, Group},
 };
-
 type G1 = pasta_curves::pallas::Point;
 type G2 = pasta_curves::vesta::Point;
 
@@ -59,7 +59,10 @@ fn main() {
 
     let mut recursive_snark: Option<RecursiveSNARK<G1, G2, C1, C2>> = None;
 
-    let z0_primary = vec![<G1 as Group>::Scalar::zero(), <G1 as Group>::Scalar::zero()];
+    let z0_primary = vec![
+        <G1 as Group>::Scalar::from_str_vartime("10").unwrap(),
+        <G1 as Group>::Scalar::zero(),
+    ];
     let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
 
     let num_steps: usize = 1;
