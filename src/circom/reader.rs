@@ -8,13 +8,12 @@ use std::path::Path;
 use std::process::Command;
 use std::str;
 
-use crate::circom::circuit::{CircomCircuit, CircuitJson, R1CS};
+use crate::circom::circuit::{CircuitJson, R1CS};
 use crate::circom::file::{from_reader, read_field};
 use ff::PrimeField;
 use pasta_curves::group::Group;
 
 type G1 = pasta_curves::pallas::Point;
-type G2 = pasta_curves::vesta::Point;
 
 pub fn generate_witness_from_bin<Fr: PrimeField>(
     witness_bin: &Path,
@@ -205,36 +204,4 @@ fn load_r1cs_from_bin<R: Read + Seek>(reader: R) -> (R1CS<<G1 as Group>::Scalar>
         },
         file.wire_mapping.iter().map(|e| *e as usize).collect_vec(),
     )
-}
-
-mod tests {
-    use std::path::Path;
-
-    use pasta_curves::group::Group;
-
-    use crate::circom::{
-        circuit::CircomCircuit,
-        reader::{load_r1cs, load_witness_from_file},
-    };
-
-    type G1 = pasta_curves::pallas::Point;
-    type G2 = pasta_curves::vesta::Point;
-
-    // #[test]
-    // fn load_sample() {
-    //     let circuit_file =
-    //         Path::new("/Users/nibnalin/Documents/Nova/examples/circom/artifacts/main.r1cs");
-    //     let witness_file =
-    //         Path::new("/Users/nibnalin/Documents/Nova/examples/circom/artifacts/witness.wtns");
-
-    //     let circuit = CircomCircuit {
-    //         r1cs: load_r1cs(&circuit_file),
-    //         witness: Some(load_witness_from_file::<<G1 as Group>::Scalar>(
-    //             &witness_file,
-    //         )),
-    //         wire_mapping: None,
-    //     };
-
-    //     // println!("circuit: {:?}", circuit);
-    // }
 }

@@ -1,11 +1,10 @@
 use bellperson::gadgets::num::AllocatedNum;
-use itertools::Itertools;
 use nova_snark::traits::circuit::StepCircuit;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::str;
 
-use ::bellperson::{ConstraintSystem, Index, LinearCombination, SynthesisError, Variable};
+use ::bellperson::{ConstraintSystem, LinearCombination, SynthesisError};
 use ff::PrimeField;
 
 #[derive(Serialize, Deserialize)]
@@ -157,7 +156,7 @@ impl<'a, Fr: PrimeField> StepCircuit<Fr> for CircomCircuit<Fr> {
         z_out
     }
 
-    fn output(&self, z: &[Fr]) -> Vec<Fr> {
+    fn output(&self, _z: &[Fr]) -> Vec<Fr> {
         self.get_public_outputs()
     }
 }

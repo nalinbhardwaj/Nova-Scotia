@@ -4,11 +4,7 @@
 use crate::circom::circuit::Constraint;
 use byteorder::{LittleEndian, ReadBytesExt};
 use ff::PrimeField;
-use hex_literal::hex;
-use pasta_curves::{
-    arithmetic::CurveAffine,
-    group::{Curve, Group},
-};
+use pasta_curves::group::Group;
 use std::{
     collections::HashMap,
     io::{Error, ErrorKind, Read, Result, Seek, SeekFrom},
@@ -196,12 +192,12 @@ pub fn from_reader<R: Read + Seek>(mut reader: R) -> Result<R1CSFile<<G1 as Grou
 }
 
 mod tests {
-    use std::io::{BufReader, Cursor};
-
-    use super::*;
-
     #[test]
     fn sample() {
+        use super::*;
+        use hex_literal::hex;
+        use std::io::{BufReader, Cursor};
+
         let data = hex!(
             "
         72316373
@@ -284,6 +280,8 @@ mod tests {
 
     #[test]
     fn test_reader_size_fail() {
+        use super::*;
+
         // fn read_header<R: Read>(mut reader: R, size: u64) -> Result<Header>
         let mut buf: Vec<u8> = 32_u32.to_le_bytes().to_vec();
         buf.resize(4 + 32, 0);

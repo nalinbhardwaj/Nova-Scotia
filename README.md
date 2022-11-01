@@ -16,7 +16,7 @@ Nova is the state of the art for ZK recursion, Circom is the state of the art fo
 
 To use it yourself, install this branch of [Circom] which adds support for the [Pasta Curves](https://electriccoin.co/blog/the-pasta-curves-for-halo-2-and-beyond/) to the C++ witness generator: [nalinbhardwaj/pasta](https://github.com/nalinbhardwaj/circom/tree/pasta).
 
-Then, compile your circuit using `circom [file].circom --r1cs --sym --c --prime pallas` for the Pallas curve. Generate a witness using the C++ witness generator in `[file]_cpp`, and pass the witness and r1cs to Nova Scotia.
+Then, compile your circuit using `circom [file].circom --r1cs --sym --c --prime vesta` for the vesta curve. Generate a witness using the C++ witness generator in `[file]_cpp`, and pass the witness and r1cs to Nova Scotia.
 
 ## TODO
 
