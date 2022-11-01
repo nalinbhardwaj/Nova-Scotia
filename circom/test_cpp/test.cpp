@@ -9,19 +9,19 @@ Circom_TemplateFunction _functionTable[1] = {
 Example_0_run };
 Circom_TemplateFunction _functionTableParallel[1] = { 
 NULL };
-uint get_main_input_signal_start() {return 2;}
+uint get_main_input_signal_start() {return 3;}
 
-uint get_main_input_signal_no() {return 2;}
+uint get_main_input_signal_no() {return 3;}
 
-uint get_total_signal_no() {return 4;}
+uint get_total_signal_no() {return 6;}
 
 uint get_number_of_components() {return 1;}
 
 uint get_size_of_input_hashmap() {return 256;}
 
-uint get_size_of_witness() {return 4;}
+uint get_size_of_witness() {return 6;}
 
-uint get_size_of_constants() {return 0;}
+uint get_size_of_constants() {return 2;}
 
 uint get_size_of_io_map() {return 0;}
 
@@ -31,7 +31,7 @@ void Example_0_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string 
 ctx->componentMemory[coffset].templateId = 0;
 ctx->componentMemory[coffset].templateName = "Example";
 ctx->componentMemory[coffset].signalStart = soffset;
-ctx->componentMemory[coffset].inputCounter = 2;
+ctx->componentMemory[coffset].inputCounter = 3;
 ctx->componentMemory[coffset].componentName = componentName;
 ctx->componentMemory[coffset].idFather = componentFather;
 ctx->componentMemory[coffset].subcomponents = new uint[0];
@@ -54,7 +54,14 @@ uint sub_component_aux;
 {
 PFrElement aux_dest = &signalValues[mySignalStart + 0];
 // load src
-Fr_add(&expaux[0],&signalValues[mySignalStart + 1],&signalValues[mySignalStart + 2]); // line circom 10
+Fr_add(&expaux[0],&signalValues[mySignalStart + 2],&signalValues[mySignalStart + 4]); // line circom 12
+// end load src
+Fr_copy(aux_dest,&expaux[0]);
+}
+{
+PFrElement aux_dest = &signalValues[mySignalStart + 1];
+// load src
+Fr_add(&expaux[0],&signalValues[mySignalStart + 2],&signalValues[mySignalStart + 3]); // line circom 13
 // end load src
 Fr_copy(aux_dest,&expaux[0]);
 }

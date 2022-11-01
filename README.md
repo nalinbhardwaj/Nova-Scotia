@@ -22,8 +22,8 @@ Then, compile your circuit using `circom [file].circom --r1cs --sym --c --prime 
 
 - [x] Understand public inputs much better
 - [x] Add support for public outputs
-- [ ] Build gluing logic for multi-proof aggregation
-    - [ ] Make it work with inputs passed between each other
+- [x] Build gluing logic for multi-proof aggregation
+    - [x] Make it work with inputs passed between each other
 - [x] Understand and fix `z[i] = 0` breakages.
 - [ ] Switch Nova to BN254/grumpkin cycle to make it work on Ethereum chain! This should be doable since Nova only needs DLOG hardness.
 

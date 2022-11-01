@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, Read, Seek};
 use std::path::Path;
+use std::process::Command;
 use std::str;
 
 use crate::circom::circuit::{CircomCircuit, CircuitJson, R1CS};
@@ -14,6 +15,23 @@ use pasta_curves::group::Group;
 
 type G1 = pasta_curves::pallas::Point;
 type G2 = pasta_curves::vesta::Point;
+
+pub fn generate_witness_from_bin<Fr: PrimeField>(
+    witness_bin: &Path,
+    witness_input: &Path,
+    witness_output: &Path,
+) -> Vec<Fr> {
+    let output = Command::new(witness_bin)
+        .arg(witness_input)
+        .arg(witness_output)
+        .output()
+        .expect("failed to execute process");
+    if output.stdout.len() > 0 || output.stderr.len() > 0 {
+        print!("stdout: {}", str::from_utf8(&output.stdout).unwrap());
+        print!("stderr: {}", str::from_utf8(&output.stderr).unwrap());
+    }
+    load_witness_from_file(witness_output)
+}
 
 /// load witness file by filename with autodetect encoding (bin or json).
 pub fn load_witness_from_file<Fr: PrimeField>(filename: &Path) -> Vec<Fr> {
@@ -68,7 +86,7 @@ fn load_witness_from_bin_reader<Fr: PrimeField, R: Read>(
         bail!("invalid file header");
     }
     let version = reader.read_u32::<LittleEndian>()?;
-    println!("wtns version {}", version);
+    // println!("wtns version {}", version);
     if version > 2 {
         bail!("unsupported file version");
     }
@@ -95,7 +113,7 @@ fn load_witness_from_bin_reader<Fr: PrimeField, R: Read>(
     //     bail!("invalid curve prime {:?}", prime);
     // }
     let witness_len = reader.read_u32::<LittleEndian>()?;
-    println!("witness len {}", witness_len);
+    // println!("witness len {}", witness_len);
     let sec_type = reader.read_u32::<LittleEndian>()?;
     if sec_type != 2 {
         bail!("invalid section type");
@@ -202,22 +220,21 @@ mod tests {
     type G1 = pasta_curves::pallas::Point;
     type G2 = pasta_curves::vesta::Point;
 
-    #[test]
-    fn load_sample() {
-        let circuit_file =
-            Path::new("/Users/nibnalin/Documents/Nova/examples/circom/artifacts/main.r1cs");
-        let witness_file =
-            Path::new("/Users/nibnalin/Documents/Nova/examples/circom/artifacts/witness.wtns");
+    // #[test]
+    // fn load_sample() {
+    //     let circuit_file =
+    //         Path::new("/Users/nibnalin/Documents/Nova/examples/circom/artifacts/main.r1cs");
+    //     let witness_file =
+    //         Path::new("/Users/nibnalin/Documents/Nova/examples/circom/artifacts/witness.wtns");
 
-        let circuit = CircomCircuit {
-            r1cs: load_r1cs(&circuit_file),
-            witness: Some(load_witness_from_file::<<G1 as Group>::Scalar>(
-                &witness_file,
-            )),
-            wire_mapping: None,
-            aux_offset: 1,
-        };
+    //     let circuit = CircomCircuit {
+    //         r1cs: load_r1cs(&circuit_file),
+    //         witness: Some(load_witness_from_file::<<G1 as Group>::Scalar>(
+    //             &witness_file,
+    //         )),
+    //         wire_mapping: None,
+    //     };
 
-        // println!("circuit: {:?}", circuit);
-    }
+    //     // println!("circuit: {:?}", circuit);
+    // }
 }

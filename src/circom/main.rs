@@ -28,7 +28,6 @@ fn main() {
             &witness_file,
         )),
         wire_mapping: None,
-        aux_offset: 1,
     };
 
     let circuit_secondary = TrivialTestCircuit::default();

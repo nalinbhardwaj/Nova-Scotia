@@ -3,16 +3,20 @@ pragma circom 2.0.3;
 // include "https://github.com/0xPARC/circom-secp256k1/blob/master/circuits/bigint.circom";
 
 template Example () {
-    signal output a;
-    signal input b;
-    signal input c;
+    signal input step_in[2];
 
-    a <== b + c;
+    signal output step_out[2];
+
+    signal input adder;
+
+    step_out[0] <== step_in[0] + adder;
+    step_out[1] <== step_in[0] + step_in[1];
 }
 
-component main = Example();
+component main { public [step_in] } = Example();
 
 /* INPUT = {
-    "b": "5",
-    "c": "5"
+    "step_in": [1, 1],
+    "step_out": [1, 2],
+    "adder": 0
 } */
