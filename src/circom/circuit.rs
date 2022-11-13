@@ -78,6 +78,7 @@ impl<'a, Fr: PrimeField> CircomCircuit<Fr> {
 
         let mut vars: Vec<AllocatedNum<Fr>> = vec![];
         let mut z_out: Vec<AllocatedNum<Fr>> = vec![];
+        println!("num_inputs: {:?}", self.r1cs.num_inputs);
         let pub_output_count = (self.r1cs.num_inputs - 1) / 2;
 
         for i in 1..self.r1cs.num_inputs {
@@ -113,7 +114,11 @@ impl<'a, Fr: PrimeField> CircomCircuit<Fr> {
             let res = lc_data.iter().fold(
                 LinearCombination::<Fr>::zero(),
                 |lc: LinearCombination<Fr>, (index, coeff)| {
-                    lc + (*coeff, vars[*index - 1].get_variable())
+                    lc + if *index > 0 {
+                        (*coeff, vars[*index - 1].get_variable())
+                    } else {
+                        (*coeff, CS::one())
+                    }
                 },
             );
             res

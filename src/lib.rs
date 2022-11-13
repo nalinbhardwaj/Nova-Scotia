@@ -96,8 +96,8 @@ pub fn create_recursive_circuit(
             .map(|&x| format!("{:?}", x).strip_prefix("0x").unwrap().to_string())
             .collect();
     }
-    fs::remove_file(witness_generator_input)?;
-    fs::remove_file(witness_generator_output)?;
+    // fs::remove_file(witness_generator_input)?;
+    // fs::remove_file(witness_generator_output)?;
 
     let circuit_secondary = TrivialTestCircuit::default();
 
@@ -128,6 +128,7 @@ pub fn create_recursive_circuit(
 mod tests {
     use std::env::current_dir;
 
+    use nova_snark::CompressedSNARK;
     use serde_json::json;
 
     use super::*;
@@ -138,9 +139,9 @@ mod tests {
         let iteration_count = 5;
         let root = current_dir().unwrap();
 
-        let circuit_file = root.join("test_example/test.r1cs");
+        let circuit_file = root.join("examples/test/test.r1cs");
         let r1cs = load_r1cs(&circuit_file);
-        let witness_generator_file = root.join("test_example/test_cpp/test");
+        let witness_generator_file = root.join("examples/test/test_cpp/test");
 
         let mut private_inputs = Vec::new();
         for i in 0..iteration_count {
@@ -198,6 +199,36 @@ mod tests {
         println!(
             "RecursiveSNARK::verify: {:?}, took {:?}",
             res,
+            start.elapsed()
+        );
+        assert!(res.is_ok());
+
+        // produce a compressed SNARK
+        println!("Generating a CompressedSNARK using Spartan with IPA-PC...");
+        let start = Instant::now();
+        type S1 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G1>;
+        type S2 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G2>;
+        let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &recursive_snark);
+        println!(
+            "CompressedSNARK::prove: {:?}, took {:?}",
+            res.is_ok(),
+            start.elapsed()
+        );
+        assert!(res.is_ok());
+        let compressed_snark = res.unwrap();
+
+        // verify the compressed SNARK
+        println!("Verifying a CompressedSNARK...");
+        let start = Instant::now();
+        let res = compressed_snark.verify(
+            &pp,
+            iteration_count,
+            start_public_input.clone(),
+            z0_secondary,
+        );
+        println!(
+            "CompressedSNARK::verify: {:?}, took {:?}",
+            res.is_ok(),
             start.elapsed()
         );
         assert!(res.is_ok());
