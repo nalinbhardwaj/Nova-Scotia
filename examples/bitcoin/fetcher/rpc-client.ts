@@ -19,6 +19,12 @@ interface JsonRpcRes {
   error?: { code: number; message: string; data?: any };
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 export class JsonRpcClient {
   nextID = 1;
   options: JsonRpcOpts;
@@ -50,6 +56,10 @@ export class JsonRpcClient {
       if (ret.id !== req.id) throw new Error("id mismatch");
       return ret;
     } catch (e) {
+      if (res.status === 429) {
+        await sleep(1000);
+        return this.req(method, params);
+      }
       throw new Error(
         `JSONRPC method ${method} error ${e}, ` +
           `${url} sent ${res.status} ${res.statusText}, ` +
@@ -79,16 +89,12 @@ export interface BlockJson {
 export type BtcRpcClient = JsonRpcClient;
 
 /**
- * Creates a Bitcoin client pointing to getblock.io
+ * Creates a Bitcoin client pointing to quicknode.com
  */
-export function createGetblockClient(
-  apiKey: string,
-  network: "testnet" | "mainnet"
-) {
-  if (!apiKey) throw new Error("Missing GetBlock API key");
+export function createQuiknodeClient() {
   return new JsonRpcClient({
-    url: `https://btc.getblock.io/${network}/`,
-    headers: { "x-api-key": apiKey },
+    url: `https://fragrant-misty-bridge.bcoin.discover.quiknode.pro/d4b08d0b94c78894de52bb3499284bc8a6ae0ded/`,
+    headers: {},
   });
 }
 

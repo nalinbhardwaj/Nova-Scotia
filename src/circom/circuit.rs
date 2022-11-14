@@ -78,7 +78,6 @@ impl<'a, Fr: PrimeField> CircomCircuit<Fr> {
 
         let mut vars: Vec<AllocatedNum<Fr>> = vec![];
         let mut z_out: Vec<AllocatedNum<Fr>> = vec![];
-        println!("num_inputs: {:?}", self.r1cs.num_inputs);
         let pub_output_count = (self.r1cs.num_inputs - 1) / 2;
 
         for i in 1..self.r1cs.num_inputs {

@@ -2,7 +2,7 @@
 // There is no license on that repo. All credits to the original author.
 import {
   BtcRpcClient,
-  createGetblockClient,
+  createQuiknodeClient,
   getBlockCount,
   getBlockHash,
   getBlockHeader,
@@ -10,7 +10,7 @@ import {
 } from "./rpc-client";
 import { ethers } from "ethers";
 
-const MAX_BLOCKS = 100;
+const MAX_BLOCKS = 800;
 
 function reverse(s: string) {
   return s.split("").reverse().join("");
@@ -27,11 +27,8 @@ function switchEndianness(s: string) {
 }
 
 async function fullFetch() {
-  const rpc = createGetblockClient(
-    "b45f926d-2b05-4d8a-8644-262f002307e3",
-    "mainnet"
-  );
-  const fromHeight = 286819;
+  const rpc = createQuiknodeClient();
+  const fromHeight = 700000;
   const btcTipHeight = await getBlockCount(rpc);
   console.log("got BTC latest block height: " + btcTipHeight);
   const targetHeight = Math.min(btcTipHeight, fromHeight + MAX_BLOCKS);

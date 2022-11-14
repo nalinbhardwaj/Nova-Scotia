@@ -23,9 +23,10 @@ struct Blocks {
 fn bench(iteration_count: usize, per_iteration_count: usize) -> (Duration, Duration) {
     let root = current_dir().unwrap();
 
-    let circuit_file = root.join("examples/bitcoin/circom/bitcoin.r1cs");
+    let circuit_file = root.join("examples/bitcoin/circom/bitcoin_benchmark.r1cs");
     let r1cs = load_r1cs(&circuit_file);
-    let witness_generator_file = root.join("examples/bitcoin/circom/bitcoin_cpp/bitcoin");
+    let witness_generator_file =
+        root.join("examples/bitcoin/circom/bitcoin_benchmark_cpp/bitcoin_benchmark");
 
     // load serde json
     let btc_blocks: Blocks =
@@ -57,7 +58,7 @@ fn bench(iteration_count: usize, per_iteration_count: usize) -> (Duration, Durat
         private_inputs.push(private_input);
     }
 
-    println!("{:?} {:?}", start_public_input, private_inputs);
+    // println!("{:?} {:?}", start_public_input, private_inputs);
 
     let pp = create_public_params(r1cs.clone());
 
@@ -89,6 +90,7 @@ fn bench(iteration_count: usize, per_iteration_count: usize) -> (Duration, Durat
         &pp,
     )
     .unwrap();
+    let prover_time = start.elapsed();
     println!("RecursiveSNARK creation took {:?}", start.elapsed());
 
     let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
@@ -107,59 +109,58 @@ fn bench(iteration_count: usize, per_iteration_count: usize) -> (Duration, Durat
         res,
         start.elapsed()
     );
+    let verifier_time = start.elapsed();
     assert!(res.is_ok());
 
     // produce a compressed SNARK
-    println!("Generating a CompressedSNARK using Spartan with IPA-PC...");
-    let start = Instant::now();
-    type S1 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G1>;
-    type S2 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G2>;
-    let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &recursive_snark);
-    let prover_time = start.elapsed();
-    println!(
-        "CompressedSNARK::prove: {:?}, took {:?}",
-        res.is_ok(),
-        start.elapsed()
-    );
-    assert!(res.is_ok());
-    let compressed_snark = res.unwrap();
+    // println!("Generating a CompressedSNARK using Spartan with IPA-PC...");
+    // let start = Instant::now();
+    // type S1 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G1>;
+    // type S2 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G2>;
+    // let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &recursive_snark);
+    // println!(
+    //     "CompressedSNARK::prove: {:?}, took {:?}",
+    //     res.is_ok(),
+    //     start.elapsed()
+    // );
+    // assert!(res.is_ok());
+    // let compressed_snark = res.unwrap();
 
-    // verify the compressed SNARK
-    println!("Verifying a CompressedSNARK...");
-    let start = Instant::now();
-    let res = compressed_snark.verify(
-        &pp,
-        iteration_count,
-        start_public_input.clone(),
-        z0_secondary,
-    );
-    let verifier_time = start.elapsed();
-    println!(
-        "CompressedSNARK::verify: {:?}, took {:?}",
-        res.is_ok(),
-        start.elapsed()
-    );
-    assert!(res.is_ok());
+    // // verify the compressed SNARK
+    // println!("Verifying a CompressedSNARK...");
+    // let start = Instant::now();
+    // let res = compressed_snark.verify(
+    //     &pp,
+    //     iteration_count,
+    //     start_public_input.clone(),
+    //     z0_secondary,
+    // );
+    // println!(
+    //     "CompressedSNARK::verify: {:?}, took {:?}",
+    //     res.is_ok(),
+    //     start.elapsed()
+    // );
+    // assert!(res.is_ok());
     (prover_time, verifier_time)
 }
 
 fn main() {
     // create benchmark file
     let mut file = std::fs::File::create("examples/bitcoin/benchmark.csv").unwrap();
-    file.write_all(b"iteration_count,per_iteration_count,prover_time,verifier_time")
+    file.write_all(b"iteration_count,per_iteration_count,prover_time,verifier_time\n")
         .unwrap();
-    for i in 1..10 {
-        let j = 100 / i;
+    for i in 2..=5 {
+        let j = 120 / i;
 
         // run bash script
         std::process::Command::new("bash")
             .arg("examples/bitcoin/circom/compile.sh")
-            .arg(j.to_string())
+            .arg(i.to_string())
             .output()
             .expect("failed to execute process");
 
-        let (prover_time, verifier_time) = bench(i, j);
-        file.write_all(format!("{},{},{:?},{:?}", i, j, prover_time, verifier_time).as_bytes())
+        let (prover_time, verifier_time) = bench(j, i);
+        file.write_all(format!("{},{},{:?},{:?}\n", j, i, prover_time, verifier_time).as_bytes())
             .unwrap();
     }
 }
