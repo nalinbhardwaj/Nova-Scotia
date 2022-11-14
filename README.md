@@ -10,7 +10,7 @@ This repository provides necessary middleware to take generated output of the Ci
 
 Nova is the state of the art for ZK recursion, Circom is the state of the art for ZK devtooling, so it makes a lot of sense to want to do this. Since Nova uses R1CS arithmetization, its mostly just a matter of parsing Circom output into something Nova can use.
 
-I personally think the right way to think of Nova is as a preprocessor for zkSNARKs with lots of repeated structure -- Nova can shrink the cost (in number of R1CS constraints) of checking N instances of a problem to ~one instance of the same problem. This is clean and magical and lends itself well to a world where we take the output of Nova and then verify it in a "real" zkSNARK (like Plonk/groth16/Spartan) to obtain a actually fully minified proof (that is sublinear even in the size of one instance). Notably, [this pattern is already used](https://youtu.be/VmYpbFxBdtM?t=155) in settings like [zkEVMs](https://youtu.be/j7An-33_Zs0), but with STARK proofs instead of Nova proofs. IMO, Nova (and folding scheme-like things in particular) lend themselves better to the properties we want with the preprocessing layer vs. STARKs: fast compression, minimal cryptographic assumptions and low recursive overhead.[^1]
+I personally think the right way to think of Nova is as a preprocessor for zkSNARKs with lots of repeated structure -- Nova can shrink the cost (in number of R1CS constraints) of checking N instances of a problem to ~one instance of the same problem. This is clean and magical and lends itself well to a world where we take the output of Nova and then verify it in a "real" zkSNARK (like PLONK/groth16/Spartan) to obtain a actually fully minified proof (that is sublinear even in the size of one instance). Notably, [this pattern is already used](https://youtu.be/VmYpbFxBdtM?t=155) in settings like [zkEVMs](https://youtu.be/j7An-33_Zs0), but with STARK proofs instead of Nova proofs. IMO, Nova (and folding scheme-like things in particular) lend themselves better to the properties we want with the preprocessing layer vs. STARKs: fast compression, minimal cryptographic assumptions and low recursive overhead.[^1]
 
 I have a more detailed talk about Nova's technical underpinnings and the neat use cases it unlocks [here](https://youtu.be/1p5bpaMbPa0). There are some bugs in my explanations with terminology etc (partly because i gave this talk during a hackathon on 3hrs of sleep lol), so beware.
 
@@ -62,13 +62,13 @@ let recursive_snark = create_recursive_circuit(
 
 For proper examples, see the [toy.rs] and the [bitcoin.rs] examples.
 
-### toy.rs
+### [`toy.rs`](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/toy.rs)
 
-toy.rs is a very simple toy step circuit meant for testing purposes. It is helpful to start by looking at its Circom code and the Rust code that instantiates it in Nova.
+toy.rs is a [very simple toy step circuit](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/toy/toy.circom) meant for testing purposes. It is helpful to start by looking at its Circom code and the Rust code that instantiates it in Nova.
 
-### bitcoin.rs
+### [`bitcoin.rs`](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin.rs)
 
-bitcoin.rs is a more complex example that uses Nova to create a prover for bitcoin chain proof-of-work. For nearly the cost of just one block header/hash proof-of-work verification, Nova can compress the verification of the entire bitcoin chain. The Circom circuit is more complex for this construction (running hashing and other bit-twiddling amounts to nearly 150k constraints per bitcoin block). This is also helpful to look at for benchmarking purposes, since you can play around with the number of blocks verified in each step of recursion. Here's some simple benchmarks for different configurations of recursion for 120 blocks being proven and verified:
+bitcoin.rs is a more complex example that uses Nova to create a prover for bitcoin chain proof-of-work. For nearly the cost of just one block header/hash proof-of-work verification, Nova can compress the verification of the entire bitcoin chain. [The Circom circuit is more complex](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin/circom/bitcoin.circom) for this construction (runs hashing and other bit-twiddling amounts to verify a block in ~150k constraints). This is also helpful to look at for [benchmarking](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin.rs#L23) purposes, since you can play around with the number of blocks verified in each step of recursion. Here are some simple benchmarks for different configurations of recursion for 120 blocks being proven and verified:
 
 | Number of recursion steps | Blocks verified per step | Prover time | Verifier time (uncompressed) |
 | ------------------------- | ------------------------ | ----------- | ---------------------------- |
