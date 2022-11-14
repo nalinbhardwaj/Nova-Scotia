@@ -2,6 +2,8 @@
 
 ### Middleware to compile [Circom](https://github.com/iden3/circom) circuits to [Nova](https://github.com/microsoft/Nova) prover
 
+<img width="100%" src="https://user-images.githubusercontent.com/6984346/201644366-a9be1826-81cc-4b78-91c0-2086241e5130.png" alt="Original from Tadashi Moriyama">
+
 This repository provides necessary middleware to take generated output of the Circom compiler (R1CS constraints and generated witnesses) and use them with Nova as a prover.
 
 ## Why?
@@ -16,13 +18,13 @@ I have a more detailed talk about Nova's technical underpinnings and the neat us
 
 ## How?
 
-[insert image here]
+![Nova Scotia](https://user-images.githubusercontent.com/6984346/201644973-fb084b6c-3807-4bf4-99bf-a1461271f1b5.png)
 
-To use it yourself, install this branch of [Circom] which adds support for the [Pasta Curves](https://electriccoin.co/blog/the-pasta-curves-for-halo-2-and-beyond/) to the C++ witness generator: [nalinbhardwaj/pasta](https://github.com/nalinbhardwaj/circom/tree/pasta). To install this branch, clone the git repo (using `git clone https://github.com/nalinbhardwaj/circom.git && git checkout pasta`). Then build and install the `circom` binary by running `cargo build --release && cargo install --path circom`. This will overwrite any existing `circom` binary. Refer to the [Circom documentation](https://docs.circom.io/getting-started/installation/#installing-dependencies) for more information.
+To use it yourself, install this branch of [Circom](https://docs.circom.io) which adds support for the [Pasta Curves](https://electriccoin.co/blog/the-pasta-curves-for-halo-2-and-beyond/) to the C++ witness generator: [nalinbhardwaj/pasta](https://github.com/nalinbhardwaj/circom/tree/pasta). To install this branch, clone the git repo (using `git clone https://github.com/nalinbhardwaj/circom.git && git checkout pasta`). Then build and install the `circom` binary by running `cargo build --release && cargo install --path circom`. This will overwrite any existing `circom` binary. Refer to the [Circom documentation](https://docs.circom.io/getting-started/installation/#installing-dependencies) for more information.
 
 ### Writing Nova Step Circuits in Circom
 
-In Circom, we operate on the abstraction of one step of recursion. We write a circuit that takes as a list of public inputs (by the name of `step_in`) and outputs as many public outputs. These public outputs will then be routed to the next step of recursion as `step_in`, and this will continue until we reach the end of the recursion. Within a step circuit, besides the public inputs, Circom circuits can input additional private inputs (with any name/JSON structure). We will instrument the piping of these private inputs in our Rust shimming.
+To write Nova Scotia circuits in Circom, we operate on the abstraction of one step of recursion. We write a circuit that takes a list of public inputs (named `step_in`) and outputs as many public outputs. These public outputs will then be routed to the next step of recursion as `step_in`, and this will continue until we reach the end of the recursion. Within a step circuit, besides the public inputs, Circom circuits can input additional private inputs (with any name/JSON structure). We will instrument the piping of these private inputs in our Rust shimming.
 
 When you're ready, compile your circuit using `circom [file].circom --r1cs --sym --c --prime vesta` for the vesta curve. Compile the C++ witness generator in `[file]_cpp` by running `make` in that folder. We will later use the R1CS file and the witness generator binary, so make note of their filepaths.
 
@@ -98,3 +100,5 @@ Credits to the original [Nova implementation and paper](https://github.com/micro
 The parsing and generation strongly borrows from other similar repos like [plonkit](https://github.com/Fluidex/plonkit), [ark-circom](https://github.com/gakonst/ark-circom), [zkutil](https://github.com/poma/zkutil) etc.
 
 I have never been to Nova Scotia. This repo is named Nova Scotia because crypto already has [Tornado Cash Nova](https://tornado-cash.medium.com/tornado-cash-introduces-arbitrary-amounts-shielded-transfers-8df92d93c37c) and [Arbitrum Nova](https://nova.arbitrum.io) besides Microsoft Nova, so its time we start adding suffixes to the term to maximize confusion around it.
+
+The art at the top of the page is by [Tadashi Moriyama](https://www.tadashimoriyama.com/portfolio?pgid=jy5bsm8q-ddbca395-1a1d-4936-a014-a924a5ca4e1e), all credits to him. I'm just a fan of it. :)
