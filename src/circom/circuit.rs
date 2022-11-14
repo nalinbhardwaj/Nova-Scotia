@@ -113,7 +113,11 @@ impl<'a, Fr: PrimeField> CircomCircuit<Fr> {
             let res = lc_data.iter().fold(
                 LinearCombination::<Fr>::zero(),
                 |lc: LinearCombination<Fr>, (index, coeff)| {
-                    lc + (*coeff, vars[*index - 1].get_variable())
+                    lc + if *index > 0 {
+                        (*coeff, vars[*index - 1].get_variable())
+                    } else {
+                        (*coeff, CS::one())
+                    }
                 },
             );
             res
