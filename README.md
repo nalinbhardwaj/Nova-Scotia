@@ -105,7 +105,7 @@ Additionally, these are numbers on my (not great) laptop, so you should expect b
 ### TODO list
 
 - [ ] Switch Nova to BN254/grumpkin cycle to make it work on Ethereum chain! This should be doable since Nova only needs DLOG hardness.
-- [ ] Add support to Circom WASM witness generator: While the C witness generator is faster and feature complete, its incompatible with M1 Macs and/or browsers. The WASM witness generator is slower but far more portable.
+- [x] Add support to Circom WASM witness generator: While the C witness generator is faster and feature complete, its incompatible with M1 Macs and/or browsers. The WASM witness generator is slower but far more portable.
 - [ ] Write Relaxed R1CS verifiers in plonk/groth16 libraries (ex. Halo 2, Circom).
 - [ ] Make Nova work with secp/secq cycle for efficient ECDSA signature verification + aggregation
 
