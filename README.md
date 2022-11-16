@@ -8,7 +8,7 @@ This repository provides necessary middleware to take generated output of the Ci
 
 ## Why?
 
-Nova is the state of the art for ZK recursion, Circom is the state of the art for ZK devtooling, so it makes a lot of sense to want to do this. Since Nova uses R1CS arithmetization, its mostly just a matter of parsing Circom output into something Nova can use.
+Nova is the state of the art for recursive SNARKs, Circom is the state of the art for ZK devtooling, so it makes a lot of sense to want to do this. Since Nova uses ~R1CS arithmetization, its mostly just a matter of parsing Circom output into something Nova can use.
 
 As [Justin Drake talks about it](https://youtu.be/SwonTtOQzAk), I think the right way to think of Nova is as a preprocessor for zkSNARKs with lots of repeated structure -- Nova can shrink the cost (in number of R1CS constraints) of checking N instances of a problem to ~one instance of the same problem. This is clean and magical and lends itself well to a world where we take the output of Nova and then verify it in a "real" zkSNARK (like PLONK/groth16/Spartan) to obtain a actually fully minified proof (that is sublinear even in the size of one instance). Notably, [this pattern is already used](https://youtu.be/VmYpbFxBdtM?t=155) in settings like [zkEVMs](https://youtu.be/j7An-33_Zs0), but with STARK proofs instead of Nova proofs. IMO, Nova (and folding scheme-like things in particular) lend themselves better to the properties we want with the preprocessing layer vs. STARKs: fast compression, minimal cryptographic assumptions and low recursive overhead.[^1]
 
@@ -22,9 +22,9 @@ To use it yourself, install this branch of [Circom](https://docs.circom.io) whic
 
 ### Writing Nova Step Circuits in Circom
 
-To write Nova Scotia circuits in Circom, we operate on the abstraction of one step of recursion. We write a circuit that takes a list of public inputs (named `step_in`) and outputs as many public outputs. These public outputs will then be routed to the next step of recursion as `step_in`, and this will continue until we reach the end of the recursion. Within a step circuit, besides the public inputs, Circom circuits can input additional private inputs (with any name/JSON structure). We will instrument the piping of these private inputs in our Rust shimming.
+To write Nova Scotia circuits in Circom, we operate on the abstraction of one step of recursion. We write a circuit that takes a list of public inputs (named `step_in`) and outputs the same number of public outputs. These public outputs will then be routed to the next step of recursion as `step_in`, and this will continue until we reach the end of the recursion iterations. Within a step circuit, besides the public inputs, Circom circuits can input additional private inputs (with any name/JSON structure Circom will accept). We will instrument the piping of these private inputs in our Rust shimming.
 
-When you're ready, compile your circuit using `circom [file].circom --r1cs --sym --c --prime vesta` for the vesta curve. Compile the C++ witness generator in `[file]_cpp` by running `make` in that folder. We will later use the R1CS file and the witness generator binary, so make note of their filepaths.
+When you're ready, compile your circuit using `circom [file].circom --r1cs --sym --c --prime vesta` for the vesta curve. Compile the C++ witness generator in `[file]_cpp` by running `make` in that folder. We will later use the R1CS file and the witness generator binary, so make note of their filepaths. You can independently test these step circuits by running witness generation as described in the [Circom documentation](https://docs.circom.io/getting-started/computing-the-witness/).
 
 ### Rust shimming for Nova Scotia
 
@@ -44,9 +44,9 @@ Then, create the public parameters (CRS) using the `create_public_params` functi
 let pp = create_public_params(r1cs.clone());
 ```
 
-Now, construct the input to Circom witness generator at each step of recursion. This is a HashMap representation of the JSON input to your Circom input. For instance, in the case of the [bitcoin] example, `private_inputs` is a list of `HashMap`s, each containing block headers and block hashes for the blocks that step of recursion verifies, and the public input `step_in` is the previous block hash in the chain.
+Now, construct the input to Circom witness generator at each step of recursion. This is a HashMap representation of the JSON input to your Circom input. For instance, in the case of the [bitcoin](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin.rs#L40) example, `private_inputs` is a list of `HashMap`s, each containing block headers and block hashes for the blocks that step of recursion verifies, and the public input `step_in` is the previous block hash in the chain.
 
-To instantiate this recursion, we use `create_recursive_circuit`:
+To instantiate this recursion, we use `create_recursive_circuit` from Nova Scotia:
 
 ```rust
 let recursive_snark = create_recursive_circuit(
@@ -58,15 +58,35 @@ let recursive_snark = create_recursive_circuit(
 ).unwrap();
 ```
 
-For proper examples, see the `toy.rs` and the `bitcoin.rs` examples.
+Verification is done using the `verify` function defined by Nova, which additionally takes secondary inputs that Nova Scotia will initialise to `vec![<G2 as Group>::Scalar::zero()]`, so just pass that in:
+
+```rust
+println!("Verifying a RecursiveSNARK...");
+let start = Instant::now();
+let res = recursive_snark.verify(
+    &pp,
+    iteration_count,
+    start_public_input.clone(),
+    vec![<G2 as Group>::Scalar::zero()],
+);
+println!(
+    "RecursiveSNARK::verify: {:?}, took {:?}",
+    res,
+    start.elapsed()
+);
+let verifier_time = start.elapsed();
+assert!(res.is_ok());
+```
+
+For proper examples and more details, see the `toy.rs` and the `bitcoin.rs` examples documented below:
 
 ### [`toy.rs`](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/toy.rs)
 
-toy.rs is a [very simple toy step circuit](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/toy/toy.circom) meant for testing purposes. It is helpful to start by looking at its Circom code and the Rust code that instantiates it in Nova.
+toy.rs is a [very simple toy step circuit](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/toy/toy.circom) meant for testing purposes. It is helpful to start by looking at its Circom code and the Rust code that instantiates it in Nova. It is a simple variant of fibonacci that additionally takes a private input to add at each step.
 
 ### [`bitcoin.rs`](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin.rs)
 
-bitcoin.rs is a more complex example that uses Nova to create a prover for bitcoin chain proof-of-work. For nearly the cost of just one block header/hash proof-of-work verification, Nova can compress the verification of the entire bitcoin chain. [The Circom circuit is more complex](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin/circom/bitcoin.circom) for this construction (runs hashing and other bit-twiddling amounts to verify a block in ~150k constraints). This is also helpful to look at for [benchmarking](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin.rs#L23) purposes, since you can play around with the number of blocks verified in each step of recursion. Here are some simple benchmarks for different configurations of recursion for 120 blocks being proven and verified:
+bitcoin.rs is a more complex example that uses Nova to create a prover for bitcoin chain proof-of-work. For nearly the cost of just one block proof-of-work verification, Nova can compress the verification of the entire bitcoin chain. [The Circom circuit is more complex](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin/circom/bitcoin.circom) for this construction (since it runs hashing and other bit-twiddling to verify each block in ~150k constraints). This is also helpful to look at for [benchmarking](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin.rs#L23) purposes, since you can play around with the number of blocks verified in each step of recursion. Here are some simple benchmarks for different configurations of recursion for 120 blocks being proven and verified:
 
 | Number of recursion steps | Blocks verified per step | Prover time | Verifier time (uncompressed) |
 | ------------------------- | ------------------------ | ----------- | ---------------------------- |
@@ -86,6 +106,7 @@ Additionally, these are numbers on my (not great) laptop, so you should expect b
 - [ ] Switch Nova to BN254/grumpkin cycle to make it work on Ethereum chain! This should be doable since Nova only needs DLOG hardness.
 - [ ] Add support to Circom WASM witness generator: While the C witness generator is faster and feature complete, its incompatible with M1 Macs and/or browsers. The WASM witness generator is slower but far more portable.
 - [ ] Write Relaxed R1CS verifiers in plonk/groth16 libraries (ex. Halo 2, Circom).
+- [ ] Make Nova work with secp/secq cycle for efficient ECDSA signature verification + aggregation
 
 Seperately, since Nova's `StepCircuit` trait is pretty much the same as Bellperson's `Circuit` trait, we can probably also use the transpilation in this repo to use [Bellperson](https://github.com/filecoin-project/bellperson) with Circom circuits/proofs, along with its [snarkpack](https://eprint.iacr.org/2021/529) aggregation features.
 
