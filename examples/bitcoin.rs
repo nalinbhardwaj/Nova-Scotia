@@ -149,7 +149,7 @@ fn main() {
     let mut file = std::fs::File::create("examples/bitcoin/benchmark.csv").unwrap();
     file.write_all(b"iteration_count,per_iteration_count,prover_time,verifier_time\n")
         .unwrap();
-    for i in 2..=5 {
+    for i in 1..=5 {
         let j = 120 / i;
 
         // run bash script

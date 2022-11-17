@@ -90,6 +90,7 @@ bitcoin.rs is a more complex example that uses Nova to create a prover for bitco
 
 | Number of recursion steps | Blocks verified per step | Prover time | Verifier time (uncompressed) |
 | ------------------------- | ------------------------ | ----------- | ---------------------------- |
+| 120                       | 1                        | 66.054s     | 234.197ms                    |
 | 60                        | 2                        | 62.959s     | 555.845ms                    |
 | 40                        | 3                        | 66.785s     | 818.208ms                    |
 | 30                        | 4                        | 59.006s     | 968.347ms                    |
