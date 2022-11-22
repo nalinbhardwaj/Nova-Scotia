@@ -10,7 +10,7 @@ use num_traits::Num;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::circom::reader::generate_witness_from_wasm;
+use crate::circom::reader::{generate_witness_from_bin, generate_witness_from_wasm};
 
 pub mod circom;
 
@@ -46,8 +46,8 @@ struct CircomInput {
 }
 
 pub fn create_recursive_circuit(
-    witness_generator_file_js: PathBuf,
-    witness_generator_file_wasm: PathBuf,
+    witness_generator_file: PathBuf,
+    witness_generator_wasm: Option<PathBuf>,
     r1cs: R1CS<F1>,
     private_inputs: Vec<HashMap<String, Value>>,
     start_public_input: Vec<F1>,
@@ -79,13 +79,22 @@ pub fn create_recursive_circuit(
 
         let input_json = serde_json::to_string(&input).unwrap();
         fs::write(&witness_generator_input, input_json).unwrap();
-
-        let witness = generate_witness_from_wasm::<<G1 as Group>::Scalar>(
-            &witness_generator_file_js,
-            &witness_generator_file_wasm,
-            &witness_generator_input,
-            &witness_generator_output,
-        );
+                
+        let witness; 
+        if witness_generator_wasm.is_some() {
+            witness = generate_witness_from_bin::<<G1 as Group>::Scalar>(
+                &witness_generator_file,
+                &witness_generator_input,
+                &witness_generator_output,
+            );
+        } else {
+            witness = generate_witness_from_wasm::<<G1 as Group>::Scalar>(
+                &witness_generator_file,
+                &witness_generator_wasm.as_ref().unwrap(),
+                &witness_generator_input,
+                &witness_generator_output,
+            );
+        }
         let circuit = CircomCircuit {
             r1cs: r1cs.clone(),
             witness: Some(witness),
