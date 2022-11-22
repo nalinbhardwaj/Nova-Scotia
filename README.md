@@ -51,12 +51,15 @@ To instantiate this recursion, we use `create_recursive_circuit` from Nova Scoti
 ```rust
 let recursive_snark = create_recursive_circuit(
     witness_generator_file,
+    None,
     r1cs,
     private_inputs,
     start_public_input.clone(),
     &pp,
 ).unwrap();
 ```
+
+To use Circom WASM witness generation, replace `witness_generator_file` with the `generate_witness.js` file provided by Circom, and set the optional `witness_generator_wasm` parameter to the `[circuit].wasm` file provided by Circom.
 
 Verification is done using the `verify` function defined by Nova, which additionally takes secondary inputs that Nova Scotia will initialise to `vec![<G2 as Group>::Scalar::zero()]`, so just pass that in:
 
@@ -105,7 +108,6 @@ Additionally, these are numbers on my (not great) laptop, so you should expect b
 ### TODO list
 
 - [ ] Switch Nova to BN254/grumpkin cycle to make it work on Ethereum chain! This should be doable since Nova only needs DLOG hardness.
-- [x] Add support to Circom WASM witness generator: While the C witness generator is faster and feature complete, its incompatible with M1 Macs and/or browsers. The WASM witness generator is slower but far more portable.
 - [ ] Write Relaxed R1CS verifiers in plonk/groth16 libraries (ex. Halo 2, Circom).
 - [ ] Make Nova work with secp/secq cycle for efficient ECDSA signature verification + aggregation
 
