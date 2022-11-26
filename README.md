@@ -38,6 +38,8 @@ let witness_generator_file =
 let r1cs = load_r1cs(&circuit_file); // loads R1CS file into memory
 ```
 
+Circom supports witness generation using both C++ and WASM, so you can choose which one to use by passing `witness_generator_file` either as the generated C++ binary or as the WASM output of Circom (the `circuit.wasm` file). If you use WASM, we assume you have a compatible version of `node` installed on your system.
+
 Then, create the public parameters (CRS) using the `create_public_params` function:
 
 ```rust
@@ -51,15 +53,12 @@ To instantiate this recursion, we use `create_recursive_circuit` from Nova Scoti
 ```rust
 let recursive_snark = create_recursive_circuit(
     witness_generator_file,
-    None,
     r1cs,
     private_inputs,
     start_public_input.clone(),
     &pp,
 ).unwrap();
 ```
-
-To use Circom WASM witness generation, replace `witness_generator_file` with the `generate_witness.js` file provided by Circom, and set the optional `witness_generator_wasm` parameter to the `[circuit].wasm` file provided by Circom.
 
 Verification is done using the `verify` function defined by Nova, which additionally takes secondary inputs that Nova Scotia will initialise to `vec![<G2 as Group>::Scalar::zero()]`, so just pass that in:
 

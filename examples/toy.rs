@@ -54,7 +54,6 @@ fn main() {
     let start = Instant::now();
     let recursive_snark = create_recursive_circuit(
         witness_generator_file,
-        None,
         r1cs,
         private_inputs,
         start_public_input.clone(),

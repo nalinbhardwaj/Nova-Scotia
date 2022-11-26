@@ -33,11 +33,14 @@ pub fn generate_witness_from_bin<Fr: PrimeField>(
 }
 
 pub fn generate_witness_from_wasm<Fr: PrimeField>(
-    witness_js: &Path,
     witness_wasm: &Path,
     witness_input: &Path,
     witness_output: &Path,
 ) -> Vec<Fr> {
+    let witness_js = Path::new(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/circom/wasm_deps/generate_witness.js"
+    ));
     let output = Command::new("node")
         .arg(witness_js)
         .arg(witness_wasm)

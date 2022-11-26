@@ -47,7 +47,6 @@ struct CircomInput {
 
 pub fn create_recursive_circuit(
     witness_generator_file: PathBuf,
-    witness_generator_wasm: Option<PathBuf>,
     r1cs: R1CS<F1>,
     private_inputs: Vec<HashMap<String, Value>>,
     start_public_input: Vec<F1>,
@@ -80,10 +79,9 @@ pub fn create_recursive_circuit(
         let input_json = serde_json::to_string(&input).unwrap();
         fs::write(&witness_generator_input, input_json).unwrap();
 
-        let witness = if witness_generator_wasm.is_some() {
+        let witness = if witness_generator_file.extension().unwrap_or_default() == "wasm" {
             generate_witness_from_wasm::<<G1 as Group>::Scalar>(
                 &witness_generator_file,
-                &witness_generator_wasm.as_ref().unwrap(),
                 &witness_generator_input,
                 &witness_generator_output,
             )

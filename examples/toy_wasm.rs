@@ -19,7 +19,6 @@ fn main() {
 
     let circuit_file = root.join("examples/toy/toy.r1cs");
     let r1cs = load_r1cs(&circuit_file);
-    let witness_generator_file = root.join("examples/toy/toy_js/generate_witness.js");
     let witness_generator_wasm = root.join("examples/toy/toy_js/toy.wasm");
 
     let mut private_inputs = Vec::new();
@@ -54,8 +53,7 @@ fn main() {
     println!("Creating a RecursiveSNARK...");
     let start = Instant::now();
     let recursive_snark = create_recursive_circuit(
-        witness_generator_file,
-        Some(witness_generator_wasm),
+        witness_generator_wasm,
         r1cs,
         private_inputs,
         start_public_input.clone(),
