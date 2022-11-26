@@ -79,22 +79,21 @@ pub fn create_recursive_circuit(
 
         let input_json = serde_json::to_string(&input).unwrap();
         fs::write(&witness_generator_input, input_json).unwrap();
-                
-        let witness; 
-        if witness_generator_wasm.is_some() {
-            witness = generate_witness_from_bin::<<G1 as Group>::Scalar>(
-                &witness_generator_file,
-                &witness_generator_input,
-                &witness_generator_output,
-            );
-        } else {
-            witness = generate_witness_from_wasm::<<G1 as Group>::Scalar>(
+
+        let witness = if witness_generator_wasm.is_some() {
+            generate_witness_from_wasm::<<G1 as Group>::Scalar>(
                 &witness_generator_file,
                 &witness_generator_wasm.as_ref().unwrap(),
                 &witness_generator_input,
                 &witness_generator_output,
-            );
-        }
+            )
+        } else {
+            generate_witness_from_bin::<<G1 as Group>::Scalar>(
+                &witness_generator_file,
+                &witness_generator_input,
+                &witness_generator_output,
+            )
+        };
         let circuit = CircomCircuit {
             r1cs: r1cs.clone(),
             witness: Some(witness),
