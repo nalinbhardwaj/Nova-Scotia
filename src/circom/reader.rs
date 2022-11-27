@@ -32,6 +32,29 @@ pub fn generate_witness_from_bin<Fr: PrimeField>(
     load_witness_from_file(witness_output)
 }
 
+pub fn generate_witness_from_wasm<Fr: PrimeField>(
+    witness_wasm: &Path,
+    witness_input: &Path,
+    witness_output: &Path,
+) -> Vec<Fr> {
+    let witness_js = Path::new(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/src/circom/wasm_deps/generate_witness.js"
+    ));
+    let output = Command::new("node")
+        .arg(witness_js)
+        .arg(witness_wasm)
+        .arg(witness_input)
+        .arg(witness_output)
+        .output()
+        .expect("failed to execute process");
+    if output.stdout.len() > 0 || output.stderr.len() > 0 {
+        print!("stdout: {}", str::from_utf8(&output.stdout).unwrap());
+        print!("stderr: {}", str::from_utf8(&output.stderr).unwrap());
+    }
+    load_witness_from_file(witness_output)
+}
+
 /// load witness file by filename with autodetect encoding (bin or json).
 pub fn load_witness_from_file<Fr: PrimeField>(filename: &Path) -> Vec<Fr> {
     if filename.ends_with("json") {

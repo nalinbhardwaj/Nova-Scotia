@@ -38,6 +38,8 @@ let witness_generator_file =
 let r1cs = load_r1cs(&circuit_file); // loads R1CS file into memory
 ```
 
+Circom supports witness generation using both C++ and WASM, so you can choose which one to use by passing `witness_generator_file` either as the generated C++ binary or as the WASM output of Circom (the `circuit.wasm` file). If you use WASM, we assume you have a compatible version of `node` installed on your system.
+
 Then, create the public parameters (CRS) using the `create_public_params` function:
 
 ```rust
@@ -105,7 +107,6 @@ Additionally, these are numbers on my (not great) laptop, so you should expect b
 ### TODO list
 
 - [ ] Switch Nova to BN254/grumpkin cycle to make it work on Ethereum chain! This should be doable since Nova only needs DLOG hardness.
-- [ ] Add support to Circom WASM witness generator: While the C witness generator is faster and feature complete, its incompatible with M1 Macs and/or browsers. The WASM witness generator is slower but far more portable.
 - [ ] Write Relaxed R1CS verifiers in plonk/groth16 libraries (ex. Halo 2, Circom).
 - [ ] Make Nova work with secp/secq cycle for efficient ECDSA signature verification + aggregation
 

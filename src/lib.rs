@@ -10,7 +10,7 @@ use num_traits::Num;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::circom::reader::generate_witness_from_bin;
+use crate::circom::reader::{generate_witness_from_bin, generate_witness_from_wasm};
 
 pub mod circom;
 
@@ -79,11 +79,19 @@ pub fn create_recursive_circuit(
         let input_json = serde_json::to_string(&input).unwrap();
         fs::write(&witness_generator_input, input_json).unwrap();
 
-        let witness = generate_witness_from_bin::<<G1 as Group>::Scalar>(
-            &witness_generator_file,
-            &witness_generator_input,
-            &witness_generator_output,
-        );
+        let witness = if witness_generator_file.extension().unwrap_or_default() == "wasm" {
+            generate_witness_from_wasm::<<G1 as Group>::Scalar>(
+                &witness_generator_file,
+                &witness_generator_input,
+                &witness_generator_output,
+            )
+        } else {
+            generate_witness_from_bin::<<G1 as Group>::Scalar>(
+                &witness_generator_file,
+                &witness_generator_input,
+                &witness_generator_output,
+            )
+        };
         let circuit = CircomCircuit {
             r1cs: r1cs.clone(),
             witness: Some(witness),
