@@ -12,7 +12,7 @@ byteorder = "1.4.3"
 ff = "0.12.0"
 hex-literal = "0.3.4"
 itertools = "0.9.0"
-nova-snark = "0.9.0"
+nova-snark = { path = "../nova-snark" }
 num-bigint = "0.4.3"
 num-traits = "0.2.15"
 pasta_curves = "0.4.0"
