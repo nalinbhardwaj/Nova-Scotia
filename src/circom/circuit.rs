@@ -37,6 +37,7 @@ pub struct CircomCircuit<Fr: PrimeField> {
 
 impl<'a, Fr: PrimeField> CircomCircuit<Fr> {
     pub fn get_public_outputs(&self) -> Vec<Fr> {
+        // NOTE: assumes exactly half of the (public inputs + outputs) are outputs
         let pub_output_count = (self.r1cs.num_inputs - 1) / 2;
         let mut z_out: Vec<Fr> = vec![];
         for i in 1..self.r1cs.num_inputs {
