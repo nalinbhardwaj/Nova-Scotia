@@ -33,7 +33,7 @@ pub fn create_public_params(
     let pp = PublicParams::<G1, G2, CircomCircuit<F1>, TrivialTestCircuit<F2>>::setup(
         circuit_primary.clone(),
         circuit_secondary.clone(),
-    );
+    ); 
     pp
 }
 
