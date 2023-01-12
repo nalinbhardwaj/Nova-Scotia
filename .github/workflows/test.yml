@@ -1,0 +1,53 @@
+name: Tests
+on: [push]
+jobs:
+  check-toy-example-wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: nalinbhardwaj/circom
+          ref: pasta
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --path circom
+      - run: sudo apt-get install -y nlohmann-json3-dev nasm
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+      - run: bash ./examples/toy/compile.sh
+      - run: cargo run --release --example toy_wasm
+  check-toy-example-cpp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: nalinbhardwaj/circom
+          ref: pasta
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --path circom
+      - run: sudo apt-get install -y nlohmann-json3-dev nasm
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+      - run: bash ./examples/toy/compile.sh
+      - run: cargo run --release --example toy

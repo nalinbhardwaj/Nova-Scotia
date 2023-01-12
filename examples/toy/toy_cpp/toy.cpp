@@ -19,11 +19,33 @@ uint get_number_of_components() {return 1;}
 
 uint get_size_of_input_hashmap() {return 256;}
 
-uint get_size_of_witness() {return 6;}
+uint get_size_of_witness() {return 5;}
 
 uint get_size_of_constants() {return 2;}
 
 uint get_size_of_io_map() {return 0;}
+
+void release_memory_component(Circom_CalcWit* ctx, uint pos) {{
+
+if (pos != 0){{
+
+delete ctx->componentMemory[pos].subcomponents;
+
+delete ctx->componentMemory[pos].subcomponentsParallel;
+
+delete ctx->componentMemory[pos].outputIsSet;
+
+delete ctx->componentMemory[pos].mutexes;
+
+delete ctx->componentMemory[pos].cvs;
+
+delete ctx->componentMemory[pos].sbct;
+
+}}
+
+
+}}
+
 
 // function declarations
 // template declarations
@@ -51,6 +73,7 @@ std::string* listOfTemplateMessages = ctx->listOfTemplateMessages;
 FrElement expaux[3];
 FrElement lvar[0];
 uint sub_component_aux;
+uint index_multiple_eq;
 {
 PFrElement aux_dest = &signalValues[mySignalStart + 0];
 // load src
@@ -64,6 +87,10 @@ PFrElement aux_dest = &signalValues[mySignalStart + 1];
 Fr_add(&expaux[0],&signalValues[mySignalStart + 2],&signalValues[mySignalStart + 3]); // line circom 13
 // end load src
 Fr_copy(aux_dest,&expaux[0]);
+}
+for (uint i = 0; i < 0; i++){
+uint index_subc = ctx->componentMemory[ctx_index].subcomponents[i];
+if (index_subc != 0)release_memory_component(ctx,index_subc);
 }
 }
 
