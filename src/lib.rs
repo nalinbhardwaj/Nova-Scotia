@@ -94,6 +94,7 @@ pub fn create_recursive_circuit(
                 &witness_generator_output,
             )
         };
+        
         let circuit = CircomCircuit {
             r1cs: r1cs.clone(),
             witness: Some(witness),
@@ -106,8 +107,8 @@ pub fn create_recursive_circuit(
             .map(|&x| format!("{:?}", x).strip_prefix("0x").unwrap().to_string())
             .collect();
     }
-    fs::remove_file(witness_generator_input)?;
-    fs::remove_file(witness_generator_output)?;
+    // fs::remove_file(witness_generator_input)?;
+    // fs::remove_file(witness_generator_output)?;
     println!("==");
 
     let circuit_secondary = TrivialTestCircuit::default();

@@ -41,6 +41,10 @@ pub fn generate_witness_from_wasm<Fr: PrimeField>(
         env!("CARGO_MANIFEST_DIR"),
         "/src/circom/wasm_deps/generate_witness.js"
     ));
+    // println!("WITNESS_JS: {:?}", witness_js);
+    // println!("WITNESS_WASM: {:?}", witness_wasm);
+    // println!("WITNESS_INPUT: {:?}", witness_input);
+    // println!("WITNESS_OUTPUT: {:?}", witness_output);
     let output = Command::new("node")
         .arg(witness_js)
         .arg(witness_wasm)
