@@ -1,3 +1,6 @@
 /target
 /Cargo.lock
 node_modules
+examples/bitcoin/circom/bitcoin_benchmark_cpp
+examples/bitcoin/circom/bitcoin_benchmark.r1cs
+examples/bitcoin/circom/bitcoin_benchmark.sym
