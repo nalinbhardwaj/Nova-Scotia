@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env::current_dir, fmt::Error, fs, path::PathBuf, time::Instant};
+use std::{collections::HashMap, env::current_dir, fs, path::PathBuf};
 
 use circom::circuit::{CircomCircuit, R1CS};
 use nova_snark::{

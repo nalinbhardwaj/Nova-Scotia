@@ -1,16 +1,9 @@
-use std::{
-    collections::HashMap,
-    env::current_dir,
-    io::Write,
-    time::{Duration, Instant},
-};
+use std::{collections::HashMap, env::current_dir, time::Instant};
 
-use ff::PrimeField;
 use nova_scotia::{
     circom::reader::load_r1cs, create_public_params, create_recursive_circuit, F1, G1, G2,
 };
 use nova_snark::{traits::Group, CompressedSNARK};
-use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 fn main() {

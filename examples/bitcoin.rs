@@ -7,13 +7,14 @@ use std::{
 
 use ff::PrimeField;
 use nova_scotia::{
-    circom::reader::load_r1cs, create_public_params, create_recursive_circuit, F1, G1, G2,
+    circom::reader::load_r1cs, create_public_params, create_recursive_circuit, F1, G2,
 };
-use nova_snark::{traits::Group, CompressedSNARK};
+use nova_snark::traits::Group;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 #[derive(Serialize, Deserialize)]
+#[allow(non_snake_case)]
 struct Blocks {
     prevBlockHash: [String; 2],
     blockHashes: Vec<[String; 2]>,
