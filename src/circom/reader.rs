@@ -156,8 +156,7 @@ pub fn load_r1cs(filename: &Path) -> R1CS<<G1 as Group>::Scalar> {
     if filename.ends_with("json") {
         load_r1cs_from_json_file(filename)
     } else {
-        let (r1cs, _wire_mapping) = load_r1cs_from_bin_file(filename);
-        r1cs
+        load_r1cs_from_bin_file(filename)
     }
 }
 
@@ -204,7 +203,7 @@ fn load_r1cs_from_json<Fr: PrimeField, R: Read>(reader: R) -> R1CS<Fr> {
 }
 
 /// load r1cs from bin file by filename
-fn load_r1cs_from_bin_file(filename: &Path) -> (R1CS<<G1 as Group>::Scalar>, Vec<usize>) {
+fn load_r1cs_from_bin_file(filename: &Path) -> R1CS<<G1 as Group>::Scalar> {
     let reader = OpenOptions::new()
         .read(true)
         .open(filename)
@@ -213,18 +212,15 @@ fn load_r1cs_from_bin_file(filename: &Path) -> (R1CS<<G1 as Group>::Scalar>, Vec
 }
 
 /// load r1cs from bin by a reader
-fn load_r1cs_from_bin<R: Read + Seek>(reader: R) -> (R1CS<<G1 as Group>::Scalar>, Vec<usize>) {
+pub fn load_r1cs_from_bin<R: Read + Seek>(reader: R) -> R1CS<<G1 as Group>::Scalar> {
     let file = from_reader(reader).expect("unable to read.");
     let num_inputs = (1 + file.header.n_pub_in + file.header.n_pub_out) as usize;
     let num_variables = file.header.n_wires as usize;
     let num_aux = num_variables - num_inputs;
-    (
-        R1CS {
-            num_aux,
-            num_inputs,
-            num_variables,
-            constraints: file.constraints,
-        },
-        file.wire_mapping.iter().map(|e| *e as usize).collect_vec(),
-    )
+    R1CS {
+        num_aux,
+        num_inputs,
+        num_variables,
+        constraints: file.constraints,
+    }
 }
