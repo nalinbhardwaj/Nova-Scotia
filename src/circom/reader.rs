@@ -2,6 +2,8 @@ use anyhow::bail;
 use byteorder::{LittleEndian, ReadBytesExt};
 use itertools::Itertools;
 use std::collections::BTreeMap;
+use std::env::current_dir;
+use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, Read, Seek};
 use std::path::Path;
@@ -10,6 +12,7 @@ use std::str;
 
 use crate::circom::circuit::{CircuitJson, R1CS};
 use crate::circom::file::{from_reader, read_field};
+use crate::FileLocation;
 use ff::PrimeField;
 use pasta_curves::group::Group;
 
@@ -17,11 +20,15 @@ type G1 = pasta_curves::pallas::Point;
 
 pub fn generate_witness_from_bin<Fr: PrimeField>(
     witness_bin: &Path,
-    witness_input: &Path,
+    witness_input_json: &String,
     witness_output: &Path,
 ) -> Vec<Fr> {
+    let root = current_dir().unwrap();
+    let witness_generator_input = root.join("circom_input.json");
+    fs::write(&witness_generator_input, witness_input_json).unwrap();
+
     let output = Command::new(witness_bin)
-        .arg(witness_input)
+        .arg(&witness_generator_input)
         .arg(witness_output)
         .output()
         .expect("failed to execute process");
@@ -29,14 +36,25 @@ pub fn generate_witness_from_bin<Fr: PrimeField>(
         print!("stdout: {}", str::from_utf8(&output.stdout).unwrap());
         print!("stderr: {}", str::from_utf8(&output.stderr).unwrap());
     }
+    let _ = fs::remove_file(witness_generator_input);
     load_witness_from_file(witness_output)
 }
 
+#[cfg(not(target_family = "wasm"))]
 pub fn generate_witness_from_wasm<Fr: PrimeField>(
-    witness_wasm: &Path,
-    witness_input: &Path,
+    witness_wasm: &FileLocation,
+    witness_input_json: &String,
     witness_output: &Path,
 ) -> Vec<Fr> {
+    let witness_wasm = match witness_wasm {
+        FileLocation::PathBuf(path) => path,
+        FileLocation::URL(_) => panic!("unreachable"),
+    };
+
+    let root = current_dir().unwrap();
+    let witness_generator_input = root.join("circom_input.json");
+    fs::write(&witness_generator_input, witness_input_json).unwrap();
+
     let witness_js = Path::new(concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/src/circom/wasm_deps/generate_witness.js"
@@ -44,7 +62,7 @@ pub fn generate_witness_from_wasm<Fr: PrimeField>(
     let output = Command::new("node")
         .arg(witness_js)
         .arg(witness_wasm)
-        .arg(witness_input)
+        .arg(&witness_generator_input)
         .arg(witness_output)
         .output()
         .expect("failed to execute process");
@@ -52,6 +70,7 @@ pub fn generate_witness_from_wasm<Fr: PrimeField>(
         print!("stdout: {}", str::from_utf8(&output.stdout).unwrap());
         print!("stderr: {}", str::from_utf8(&output.stderr).unwrap());
     }
+    let _ = fs::remove_file(witness_generator_input);
     load_witness_from_file(witness_output)
 }
 
@@ -98,7 +117,7 @@ pub fn load_witness_from_array<Fr: PrimeField>(buffer: Vec<u8>) -> Result<Vec<Fr
 }
 
 /// load witness from u8 array by a reader
-fn load_witness_from_bin_reader<Fr: PrimeField, R: Read>(
+pub(crate) fn load_witness_from_bin_reader<Fr: PrimeField, R: Read>(
     mut reader: R,
 ) -> Result<Vec<Fr>, anyhow::Error> {
     let mut wtns_header = [0u8; 4];
@@ -151,14 +170,22 @@ fn load_witness_from_bin_reader<Fr: PrimeField, R: Read>(
     Ok(result)
 }
 
+#[cfg(not(target_family = "wasm"))]
 /// load r1cs file by filename with autodetect encoding (bin or json)
-pub fn load_r1cs(filename: &Path) -> R1CS<<G1 as Group>::Scalar> {
+pub fn load_r1cs(filename: &FileLocation) -> R1CS<<G1 as Group>::Scalar> {
+    let filename = match filename {
+        FileLocation::PathBuf(filename) => filename,
+        FileLocation::URL(_) => panic!("unreachable"),
+    };
     if filename.ends_with("json") {
         load_r1cs_from_json_file(filename)
     } else {
         load_r1cs_from_bin_file(filename)
     }
 }
+
+#[cfg(target_family = "wasm")]
+pub use crate::circom::wasm::load_r1cs;
 
 /// load r1cs from json file by filename
 fn load_r1cs_from_json_file<Fr: PrimeField>(filename: &Path) -> R1CS<Fr> {
@@ -212,7 +239,7 @@ fn load_r1cs_from_bin_file(filename: &Path) -> R1CS<<G1 as Group>::Scalar> {
 }
 
 /// load r1cs from bin by a reader
-pub fn load_r1cs_from_bin<R: Read + Seek>(reader: R) -> R1CS<<G1 as Group>::Scalar> {
+pub(crate) fn load_r1cs_from_bin<R: Read + Seek>(reader: R) -> R1CS<<G1 as Group>::Scalar> {
     let file = from_reader(reader).expect("unable to read.");
     let num_inputs = (1 + file.header.n_pub_in + file.header.n_pub_out) as usize;
     let num_variables = file.header.n_wires as usize;
