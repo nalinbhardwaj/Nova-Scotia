@@ -14,7 +14,6 @@ use num_bigint::BigInt;
 use num_traits::Num;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::io::{Error, ErrorKind};
 
 use crate::circom::reader::generate_witness_from_bin;
 

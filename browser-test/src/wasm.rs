@@ -1,15 +1,12 @@
-use std::{collections::HashMap, env::current_dir};
+use std::collections::HashMap;
 
-use js_sys::Uint8Array;
 use nova_scotia::FileLocation;
 use nova_scotia::{
     circom::reader::load_r1cs, create_public_params, create_recursive_circuit, F1, G1, G2,
 };
 use nova_snark::{traits::Group, CompressedSNARK};
 use serde_json::json;
-use std::io::Cursor;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::JsFuture;
 
 pub use wasm_bindgen_rayon::init_thread_pool;
 
@@ -46,7 +43,7 @@ pub fn init_panic_hook() {
 
 #[wasm_bindgen]
 pub async fn generate_proof() {
-    let iteration_count = 1;
+    let iteration_count = 5;
 
     let r1cs = load_r1cs(&FileLocation::URL(
         "http://localhost:3000/toy.r1cs".to_string(),
@@ -65,25 +62,25 @@ pub async fn generate_proof() {
 
     let pp = create_public_params(r1cs.clone());
 
-    println!(
+    console_log!(
         "Number of constraints per step (primary circuit): {}",
         pp.num_constraints().0
     );
-    println!(
+    console_log!(
         "Number of constraints per step (secondary circuit): {}",
         pp.num_constraints().1
     );
 
-    println!(
+    console_log!(
         "Number of variables per step (primary circuit): {}",
         pp.num_variables().0
     );
-    println!(
+    console_log!(
         "Number of variables per step (secondary circuit): {}",
         pp.num_variables().1
     );
 
-    println!("Creating a RecursiveSNARK...");
+    console_log!("Creating a RecursiveSNARK...");
     let recursive_snark = create_recursive_circuit(
         witness_generator_wasm,
         r1cs,
@@ -98,7 +95,7 @@ pub async fn generate_proof() {
     let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
 
     // verify the recursive SNARK
-    println!("Verifying a RecursiveSNARK...");
+    console_log!("Verifying a RecursiveSNARK...");
     let res = recursive_snark.verify(
         &pp,
         iteration_count,
@@ -108,7 +105,7 @@ pub async fn generate_proof() {
     assert!(res.is_ok());
 
     // produce a compressed SNARK
-    println!("Generating a CompressedSNARK using Spartan with IPA-PC...");
+    console_log!("Generating a CompressedSNARK using Spartan with IPA-PC...");
     type S1 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G1>;
     type S2 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G2>;
     let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &recursive_snark);
@@ -116,7 +113,7 @@ pub async fn generate_proof() {
     let compressed_snark = res.unwrap();
 
     // verify the compressed SNARK
-    println!("Verifying a CompressedSNARK...");
+    console_log!("Verifying a CompressedSNARK...");
     let res = compressed_snark.verify(
         &pp,
         iteration_count,

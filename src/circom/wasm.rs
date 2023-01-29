@@ -1,13 +1,9 @@
-use std::{collections::HashMap, env::current_dir, time::Instant};
-
 use crate::{FileLocation, G1, R1CS};
 
 use crate::circom::reader::{load_r1cs_from_bin, load_witness_from_bin_reader};
 use ff::PrimeField;
-use futures::executor;
 use js_sys::Uint8Array;
-use nova_snark::{traits::Group, CompressedSNARK};
-use serde_json::json;
+use nova_snark::traits::Group;
 use std::io::Cursor;
 use std::path::Path;
 use wasm_bindgen::prelude::*;
@@ -21,8 +17,8 @@ extern "C" {
 
 #[wasm_bindgen]
 pub async fn read_file(path: &str) -> Uint8Array {
-    let promiseAsJsValue = read_file_async(path);
-    let promise = js_sys::Promise::from(promiseAsJsValue);
+    let promise_as_js_value = read_file_async(path);
+    let promise = js_sys::Promise::from(promise_as_js_value);
     let future = JsFuture::from(promise);
     let result: Result<JsValue, JsValue> = future.await;
     if let Ok(content) = result {
@@ -34,8 +30,8 @@ pub async fn read_file(path: &str) -> Uint8Array {
 
 #[wasm_bindgen]
 pub async fn generate_witness_browser(input_json_string: &str, wasm_file: &str) -> Uint8Array {
-    let promiseAsJsValue = generate_witness_browser_async(input_json_string, wasm_file);
-    let promise = js_sys::Promise::from(promiseAsJsValue);
+    let promise_as_js_value = generate_witness_browser_async(input_json_string, wasm_file);
+    let promise = js_sys::Promise::from(promise_as_js_value);
     let future = JsFuture::from(promise);
     let result: Result<JsValue, JsValue> = future.await;
     if let Ok(content) = result {
@@ -61,7 +57,7 @@ pub async fn load_r1cs(filename: &FileLocation) -> R1CS<<G1 as Group>::Scalar> {
 pub async fn generate_witness_from_wasm<Fr: PrimeField>(
     witness_wasm: &FileLocation,
     witness_input_json: &String,
-    witness_output: &Path, // note: this is unused
+    _witness_output: &Path, // note: this is unused
 ) -> Vec<Fr> {
     let witness_wasm = match witness_wasm {
         FileLocation::PathBuf(_) => panic!("unreachable"),
