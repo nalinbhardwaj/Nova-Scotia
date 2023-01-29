@@ -51,3 +51,12 @@ jobs:
           node-version: "16"
       - run: bash ./examples/toy/compile.sh
       - run: cargo run --release --example toy
+  check-toy-example-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2022-08-09
+      - uses: jetli/wasm-pack-action@v0.4.0
+      - uses: actions/checkout@v3
+      - run: cd browser-test && wasm-pack build --target web --out-dir test-client/public/pkg
