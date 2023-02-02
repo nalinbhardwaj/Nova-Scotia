@@ -7,7 +7,7 @@ use std::{
 
 use ff::PrimeField;
 use nova_scotia::{
-    circom::reader::load_r1cs, create_public_params, create_recursive_circuit, F1, G2,
+    circom::reader::load_r1cs, create_public_params, create_recursive_circuit, FileLocation, F1, G2,
 };
 use nova_snark::traits::Group;
 use serde::{Deserialize, Serialize};
@@ -25,7 +25,7 @@ fn bench(iteration_count: usize, per_iteration_count: usize) -> (Duration, Durat
     let root = current_dir().unwrap();
 
     let circuit_file = root.join("examples/bitcoin/circom/bitcoin_benchmark.r1cs");
-    let r1cs = load_r1cs(&circuit_file);
+    let r1cs = load_r1cs(&FileLocation::PathBuf(circuit_file));
     let witness_generator_file =
         root.join("examples/bitcoin/circom/bitcoin_benchmark_cpp/bitcoin_benchmark");
 
@@ -84,7 +84,7 @@ fn bench(iteration_count: usize, per_iteration_count: usize) -> (Duration, Durat
     println!("Creating a RecursiveSNARK...");
     let start = Instant::now();
     let recursive_snark = create_recursive_circuit(
-        witness_generator_file,
+        FileLocation::PathBuf(witness_generator_file),
         r1cs,
         private_inputs,
         start_public_input.clone(),
