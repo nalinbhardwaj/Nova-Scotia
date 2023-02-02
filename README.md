@@ -20,11 +20,13 @@ As [Justin Drake talks about it](https://youtu.be/SwonTtOQzAk), I think the righ
 
 To use it yourself, install this branch of [Circom](https://docs.circom.io) which adds support for the [Pasta Curves](https://electriccoin.co/blog/the-pasta-curves-for-halo-2-and-beyond/) to the C++ witness generator: [nalinbhardwaj/pasta](https://github.com/nalinbhardwaj/circom/tree/pasta). To install this branch, clone the git repo (using `git clone https://github.com/nalinbhardwaj/circom.git && git checkout pasta`). Then build and install the `circom` binary by running `cargo build --release && cargo install --path circom`. This will overwrite any existing `circom` binary. Refer to the [Circom documentation](https://docs.circom.io/getting-started/installation/#installing-dependencies) for more information.
 
+Note that if you are interested in generating and verifying proofs in browsers, you must use the WASM witness generator. We will describe in-browser proving and verification later in the README.
+
 ### Writing Nova Step Circuits in Circom
 
 To write Nova Scotia circuits in Circom, we operate on the abstraction of one step of recursion. We write a circuit that takes a list of public inputs (named `step_in`) and outputs the same number of public outputs. These public outputs will then be routed to the next step of recursion as `step_in`, and this will continue until we reach the end of the recursion iterations. Within a step circuit, besides the public inputs, Circom circuits can input additional private inputs (with any name/JSON structure Circom will accept). We will instrument the piping of these private inputs in our Rust shimming.
 
-When you're ready, compile your circuit using `circom [file].circom --r1cs --sym --c --prime vesta` for the vesta curve. Compile the C++ witness generator in `[file]_cpp` by running `make` in that folder. We will later use the R1CS file and the witness generator binary, so make note of their filepaths. You can independently test these step circuits by running witness generation as described in the [Circom documentation](https://docs.circom.io/getting-started/computing-the-witness/).
+When you're ready, compile your circuit using `circom [file].circom --r1cs --sym --c --prime vesta` for the vesta curve. Compile the C++ witness generator in `[file]_cpp` by running `make` in that folder. Alternately, you can compile the WASM witness generator using `circom [file].circom --r1cs --sym --wasm --prime vesta`.  We will later use the R1CS file and the witness generator binary (either C++ binary or WASM), so make note of their filepaths. You can independently test these step circuits by running witness generation as described in the [Circom documentation](https://docs.circom.io/getting-started/computing-the-witness/).
 
 ### Rust shimming for Nova Scotia
 
@@ -101,6 +103,12 @@ bitcoin.rs is a more complex example that uses Nova to create a prover for bitco
 Note that the verification times are linear in the number of blocks per step of recursion, while the proving time reduces with fewer recursive steps. In practice, you would use the output of Nova as an input to another SNARK scheme like Plonk/groth16 (as previously mentioned) to obtain full succinctness.
 
 Additionally, these are numbers on my (not great) laptop, so you should expect better performance on a beefier machine, especially because Nova supports GPU accelerated MSMs for proving under the hood.
+
+## In-browser proving and verification
+
+Nova Scotia also supports proving and verification of proofs in browser, along with serde of proofs and public parameters. We provide an example of in-browser proving using Rust compiled to WASM in the [`browser-test`](https://github.com/nalinbhardwaj/Nova-Scotia/tree/main/browser-test) folder of the repository. The [`test-client`](https://github.com/nalinbhardwaj/Nova-Scotia/tree/main/browser-test/test-client) in the folder is a Create React App demonstrating in-browser proving and verification. If you are interested in similar usage, please look through the folders to understand how they work. It may also be useful to look at the [halo2 guide to WASM compiling](https://zcash.github.io/halo2/user/wasm-port.html).
+
+![image](https://user-images.githubusercontent.com/6984346/216265979-5a7e3081-5211-4327-a12b-5fb3178d1016.png)
 
 ## Notes for interested contributors
 
