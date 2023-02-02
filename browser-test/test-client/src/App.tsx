@@ -10,31 +10,83 @@ function App() {
   });
   const workerApi =
     wrap<import("./nova-scotia-worker").NovaScotiaWorker>(worker);
-  const [ans, setAns] = useState(0);
+  const [pp, setPp] = useState("");
+  const [proof, setProof] = useState("");
+  const [ver, setVer] = useState(false);
+  const [paramTime, setParamTime] = useState(-1);
+  const [proofTime, setProofTime] = useState(-1);
+  const [verifyTime, setVerifyTime] = useState(-1);
 
-  async function test() {
+  async function generate_params() {
+    setParamTime(0);
     const start = performance.now();
-    await workerApi.test_nova_scotia();
-    console.log("time", performance.now() - start);
+    const pp = await workerApi.generate_params();
+    setPp(pp);
+    setParamTime(performance.now() - start);
+  }
+
+  async function generate_proof() {
+    setProofTime(0);
+    const start2 = performance.now();
+    const proof = await workerApi.generate_proof(pp);
+    console.log("proof time", performance.now() - start2);
+    setProof(proof);
+    setProofTime(performance.now() - start2);
+  }
+
+  async function verify_proof() {
+    setVerifyTime(0);
+    const start3 = performance.now();
+    const ver = await workerApi.verify_proof(pp, proof);
+    console.log("verify time", performance.now() - start3);
+    setVer(ver);
+    setVerifyTime(performance.now() - start3);
   }
 
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
+        <p>Generate Public params:</p>
+        <button onClick={generate_params}>Parametrize</button>
         <p>
-          Edit <code>src/App.tsx</code> and save to reload.
+          Generation time:{" "}
+          {paramTime < 0
+            ? "Not started"
+            : paramTime == 0
+            ? "Running"
+            : (paramTime / 1000).toFixed(2) + "s"}
         </p>
-        {ans}
-        <button onClick={test}>test</button>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+
+        {paramTime > 0 && (
+          <>
+            <p>Create proof:</p>
+            <button onClick={generate_proof}>Prove</button>
+            <p>
+              Proving time:{" "}
+              {proofTime < 0
+                ? "Not started"
+                : proofTime == 0
+                ? "Running"
+                : (proofTime / 1000).toFixed(2) + "s"}
+            </p>
+          </>
+        )}
+
+        {proofTime > 0 && (
+          <>
+            <p>Verify proof:</p>
+            <button onClick={verify_proof}>Verify</button>
+            <p>
+              Verification time:{" "}
+              {verifyTime < 0
+                ? "Not started"
+                : verifyTime == 0
+                ? "Running"
+                : (verifyTime / 1000).toFixed(2) + "s"}
+            </p>
+          </>
+        )}
       </header>
     </div>
   );

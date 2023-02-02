@@ -31,7 +31,6 @@
     "eslint-webpack-plugin": "^3.1.1",
     "file-loader": "^6.2.0",
     "fs-extra": "^10.0.0",
-    "halowordle": "file:public/pkg",
     "nova_scotia_browser": "file:public/pkg",
     "html-webpack-plugin": "^5.5.0",
     "identity-obj-proxy": "^3.0.0",

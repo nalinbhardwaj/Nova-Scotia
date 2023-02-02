@@ -2,9 +2,14 @@ use std::collections::HashMap;
 
 use nova_scotia::FileLocation;
 use nova_scotia::{
-    circom::reader::load_r1cs, create_public_params, create_recursive_circuit, F1, G1, G2,
+    circom::{circuit::CircomCircuit, reader::load_r1cs},
+    create_public_params, create_recursive_circuit, F1, F2, G1, G2,
 };
-use nova_snark::{traits::Group, CompressedSNARK};
+use nova_snark::{
+    spartan_with_ipa_pc::RelaxedR1CSSNARK,
+    traits::{circuit::TrivialTestCircuit, Group},
+    CompressedSNARK, PublicParams,
+};
 use serde_json::json;
 use wasm_bindgen::prelude::*;
 
@@ -42,7 +47,18 @@ pub fn init_panic_hook() {
 }
 
 #[wasm_bindgen]
-pub async fn generate_proof() {
+pub async fn generate_params() -> String {
+    let r1cs = load_r1cs(&FileLocation::URL(
+        "http://localhost:3000/toy.r1cs".to_string(),
+    ))
+    .await;
+    let pp = create_public_params(r1cs.clone());
+    let serialised = serde_json::to_string(&pp).unwrap();
+    return serialised;
+}
+
+#[wasm_bindgen]
+pub async fn generate_proof(pp_str: String) -> String {
     let iteration_count = 5;
 
     let r1cs = load_r1cs(&FileLocation::URL(
@@ -60,7 +76,11 @@ pub async fn generate_proof() {
 
     let start_public_input = vec![F1::from(10), F1::from(10)];
 
-    let pp = create_public_params(r1cs.clone());
+    let pp =
+        serde_json::from_str::<PublicParams<G1, G2, CircomCircuit<F1>, TrivialTestCircuit<F2>>>(
+            &pp_str,
+        )
+        .unwrap();
 
     console_log!(
         "Number of constraints per step (primary circuit): {}",
@@ -111,14 +131,40 @@ pub async fn generate_proof() {
     let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &recursive_snark);
     assert!(res.is_ok());
     let compressed_snark = res.unwrap();
+    return serde_json::to_string(&compressed_snark).unwrap();
+}
 
-    // verify the compressed SNARK
-    console_log!("Verifying a CompressedSNARK...");
-    let res = compressed_snark.verify(
+#[wasm_bindgen]
+pub async fn verify_compressed_proof(pp_str: String, proof_str: String) -> bool {
+    let pp =
+        serde_json::from_str::<PublicParams<G1, G2, CircomCircuit<F1>, TrivialTestCircuit<F2>>>(
+            &pp_str,
+        )
+        .unwrap();
+
+    let iteration_count = 5;
+    let start_public_input = vec![F1::from(10), F1::from(10)];
+    let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
+
+    type S1 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G1>;
+    type S2 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G2>;
+
+    let compressed_proof = serde_json::from_str::<
+        CompressedSNARK<
+            G1,
+            G2,
+            CircomCircuit<F1>,
+            TrivialTestCircuit<F2>,
+            RelaxedR1CSSNARK<G1>,
+            RelaxedR1CSSNARK<G2>,
+        >,
+    >(&proof_str)
+    .unwrap();
+    let res = compressed_proof.verify(
         &pp,
         iteration_count,
         start_public_input.clone(),
         z0_secondary,
     );
-    assert!(res.is_ok());
+    return res.is_ok();
 }

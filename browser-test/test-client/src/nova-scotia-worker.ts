@@ -1,16 +1,33 @@
 import { expose } from "comlink";
 
-async function test_nova_scotia() {
+async function generate_params() {
   const multiThread = await import("nova_scotia_browser");
   await multiThread.default();
   await multiThread.initThreadPool(navigator.hardwareConcurrency);
-  console.log("here we go");
-  await multiThread.generate_proof();
-  console.log("done");
+
+  return await multiThread.generate_params();
+}
+
+async function generate_proof(pp: string) {
+  const multiThread = await import("nova_scotia_browser");
+  await multiThread.default();
+  await multiThread.initThreadPool(navigator.hardwareConcurrency);
+
+  return await multiThread.generate_proof(pp);
+}
+
+async function verify_proof(pp: string, proof: string) {
+  const multiThread = await import("nova_scotia_browser");
+  await multiThread.default();
+  await multiThread.initThreadPool(navigator.hardwareConcurrency);
+
+  return await multiThread.verify_compressed_proof(pp, proof);
 }
 
 const exports = {
-  test_nova_scotia,
+  generate_params,
+  generate_proof,
+  verify_proof,
 };
 export type NovaScotiaWorker = typeof exports;
 
