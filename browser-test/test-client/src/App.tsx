@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import logo from "./logo.svg";
 import "./App.css";
 import { wrap } from "comlink";
@@ -12,7 +12,7 @@ function App() {
     wrap<import("./nova-scotia-worker").NovaScotiaWorker>(worker);
   const [pp, setPp] = useState("");
   const [proof, setProof] = useState("");
-  const [ver, setVer] = useState(false);
+  const [ver, setVer] = useState(-1);
   const [paramTime, setParamTime] = useState(-1);
   const [proofTime, setProofTime] = useState(-1);
   const [verifyTime, setVerifyTime] = useState(-1);
@@ -37,9 +37,10 @@ function App() {
   async function verify_proof() {
     setVerifyTime(0);
     const start3 = performance.now();
-    const ver = await workerApi.verify_proof(pp, proof);
+    const res = await workerApi.verify_proof(pp, proof);
     console.log("verify time", performance.now() - start3);
-    setVer(ver);
+    if (res) setVer(1);
+    else setVer(0);
     setVerifyTime(performance.now() - start3);
   }
 
@@ -53,7 +54,7 @@ function App() {
           Generation time:{" "}
           {paramTime < 0
             ? "Not started"
-            : paramTime == 0
+            : paramTime === 0
             ? "Running"
             : (paramTime / 1000).toFixed(2) + "s"}
         </p>
@@ -66,7 +67,7 @@ function App() {
               Proving time:{" "}
               {proofTime < 0
                 ? "Not started"
-                : proofTime == 0
+                : proofTime === 0
                 ? "Running"
                 : (proofTime / 1000).toFixed(2) + "s"}
             </p>
@@ -81,9 +82,13 @@ function App() {
               Verification time:{" "}
               {verifyTime < 0
                 ? "Not started"
-                : verifyTime == 0
+                : verifyTime === 0
                 ? "Running"
                 : (verifyTime / 1000).toFixed(2) + "s"}
+            </p>
+            <p>
+              Verification status:{" "}
+              {ver < 0 ? "Not done" : ver === 0 ? "Failed" : "Success"}
             </p>
           </>
         )}
