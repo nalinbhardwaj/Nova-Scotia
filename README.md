@@ -94,11 +94,11 @@ bitcoin.rs is a more complex example that uses Nova to create a prover for bitco
 
 | Number of recursion steps | Blocks verified per step | Prover time | Verifier time (uncompressed) |
 | ------------------------- | ------------------------ | ----------- | ---------------------------- |
-| 120                       | 1                        | 66.054s     | 234.197ms                    |
-| 60                        | 2                        | 62.959s     | 555.845ms                    |
-| 40                        | 3                        | 66.785s     | 818.208ms                    |
-| 30                        | 4                        | 59.006s     | 968.347ms                    |
-| 24                        | 5                        | 57.679s     | 1.237s                       |
+| 120                       | 1                        | 57.33s      | 197.20ms                     |
+| 60                        | 2                        | 46.11s      | 307.08ms                     |
+| 40                        | 3                        | 43.60s      | 449.02ms                     |
+| 30                        | 4                        | 41.17s      | 560.53ms                     |
+| 24                        | 5                        | 39.73s      | 728.09ms                     |
 
 Note that the verification times are linear in the number of blocks per step of recursion, while the proving time reduces with fewer recursive steps. In practice, you would use the output of Nova as an input to another SNARK scheme like Plonk/groth16 (as previously mentioned) to obtain full succinctness.
 
