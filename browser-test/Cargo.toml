@@ -7,10 +7,9 @@ edition = "2021"
 
 [dependencies]
 nova-scotia = { path = "../" }
-nova-snark = "0.12.0"
+nova-snark = { version = "0.15.0" }
 num-bigint = { version = "0.4", features = ["serde", "rand"] }
 num-traits = "0.2.15"
-pasta_curves = { version = "0.5.2", features = ["repr-c", "serde"], package = "fil_pasta_curves" }
 serde = "1.0"
 serde_json = "1.0.85"
 

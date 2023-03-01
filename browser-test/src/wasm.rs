@@ -3,10 +3,10 @@ use std::collections::HashMap;
 use nova_scotia::FileLocation;
 use nova_scotia::{
     circom::{circuit::CircomCircuit, reader::load_r1cs},
-    create_public_params, create_recursive_circuit, F1, F2, G1, G2,
+    create_public_params, create_recursive_circuit, EE1, EE2, F1, F2, G1, G2, S1, S2,
 };
 use nova_snark::{
-    spartan_with_ipa_pc::RelaxedR1CSSNARK,
+    spartan::RelaxedR1CSSNARK,
     traits::{circuit::TrivialTestCircuit, Group},
     CompressedSNARK, PublicParams,
 };
@@ -126,8 +126,6 @@ pub async fn generate_proof(pp_str: String) -> String {
 
     // produce a compressed SNARK
     console_log!("Generating a CompressedSNARK using Spartan with IPA-PC...");
-    type S1 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G1>;
-    type S2 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G2>;
     let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &recursive_snark);
     assert!(res.is_ok());
     let compressed_snark = res.unwrap();
@@ -146,17 +144,14 @@ pub async fn verify_compressed_proof(pp_str: String, proof_str: String) -> bool 
     let start_public_input = vec![F1::from(10), F1::from(10)];
     let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
 
-    type S1 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G1>;
-    type S2 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G2>;
-
     let compressed_proof = serde_json::from_str::<
         CompressedSNARK<
             G1,
             G2,
             CircomCircuit<F1>,
             TrivialTestCircuit<F2>,
-            RelaxedR1CSSNARK<G1>,
-            RelaxedR1CSSNARK<G2>,
+            RelaxedR1CSSNARK<G1, EE1>,
+            RelaxedR1CSSNARK<G2, EE2>,
         >,
     >(&proof_str)
     .unwrap();

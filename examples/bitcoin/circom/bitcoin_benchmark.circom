@@ -199,4 +199,4 @@ template Main(BLOCK_COUNT) {
     for (var j = 0;j < 2;j++) lastBlockHash[j] <== blockHashes[BLOCK_COUNT - 1][j];
 }
 
-component main { public [step_in] } = Main(2);
+component main { public [step_in] } = Main(5);

@@ -2,7 +2,7 @@ use std::{collections::HashMap, env::current_dir, time::Instant};
 
 use nova_scotia::{
     circom::reader::load_r1cs, create_public_params, create_recursive_circuit, FileLocation, F1,
-    G1, G2,
+    G2, S1, S2,
 };
 use nova_snark::{traits::Group, CompressedSNARK};
 use serde_json::json;
@@ -78,8 +78,6 @@ fn main() {
     // produce a compressed SNARK
     println!("Generating a CompressedSNARK using Spartan with IPA-PC...");
     let start = Instant::now();
-    type S1 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G1>;
-    type S2 = nova_snark::spartan_with_ipa_pc::RelaxedR1CSSNARK<G2>;
     let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &recursive_snark);
     println!(
         "CompressedSNARK::prove: {:?}, took {:?}",
