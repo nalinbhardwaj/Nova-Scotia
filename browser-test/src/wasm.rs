@@ -46,10 +46,12 @@ pub fn init_panic_hook() {
     console_error_panic_hook::set_once();
 }
 
+const WEBSITE_ROOT: &str = "https://effulgent-liger-07e9d0.netlify.app/";
+
 #[wasm_bindgen]
 pub async fn generate_params() -> String {
     let r1cs = load_r1cs(&FileLocation::URL(
-        "http://localhost:3000/toy.r1cs".to_string(),
+        WEBSITE_ROOT.to_string().clone() + &"toy.r1cs".to_string(),
     ))
     .await;
     let pp = create_public_params(r1cs.clone());
@@ -62,10 +64,11 @@ pub async fn generate_proof(pp_str: String) -> String {
     let iteration_count = 5;
 
     let r1cs = load_r1cs(&FileLocation::URL(
-        "http://localhost:3000/toy.r1cs".to_string(),
+        WEBSITE_ROOT.to_string().clone() + &"toy.r1cs".to_string(),
     ))
     .await;
-    let witness_generator_wasm = FileLocation::URL("http://localhost:3000/toy.wasm".to_string());
+    let witness_generator_wasm =
+        FileLocation::URL(WEBSITE_ROOT.to_string().clone() + &"toy.wasm".to_string());
 
     let mut private_inputs = Vec::new();
     for i in 0..iteration_count {
