@@ -1,5 +1,5 @@
 name: Tests
-on: [push]
+on: [push, pull_request]
 env:
   NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
   NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
@@ -65,11 +65,3 @@ jobs:
       - run: rustup component add rust-src --toolchain nightly-2022-08-09-x86_64-unknown-linux-gnu
       - run: cd browser-test && wasm-pack build --target web --out-dir test-client/public/pkg
       - run: cd browser-test/test-client && yarn install && CI=false yarn build
-      - uses: jsmrcaga/action-netlify-deploy@v2.0.0
-        with:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          NETLIFY_DEPLOY_TO_PROD: ${{ github.ref_name == 'main' }}
-          build_directory: browser-test/test-client/build
-          install_command: "echo Skipping installing the dependencies"
-          build_command: "echo Skipping building the web files"
