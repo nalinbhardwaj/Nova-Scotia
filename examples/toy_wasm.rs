@@ -78,7 +78,8 @@ fn main() {
     // produce a compressed SNARK
     println!("Generating a CompressedSNARK using Spartan with IPA-PC...");
     let start = Instant::now();
-    let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &recursive_snark);
+    let (pk, vk) = CompressedSNARK::<_, _, _, _, S1, S2>::setup(&pp).unwrap();
+    let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &pk, &recursive_snark);
     println!(
         "CompressedSNARK::prove: {:?}, took {:?}",
         res.is_ok(),
@@ -91,7 +92,7 @@ fn main() {
     println!("Verifying a CompressedSNARK...");
     let start = Instant::now();
     let res = compressed_snark.verify(
-        &pp,
+        &vk,
         iteration_count,
         start_public_input.clone(),
         z0_secondary,
