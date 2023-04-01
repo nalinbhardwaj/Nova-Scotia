@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use nova_scotia::FileLocation;
 use nova_scotia::{
     circom::{circuit::CircomCircuit, reader::load_r1cs},
-    create_public_params, create_recursive_circuit, CC1, CC2, EE1, EE2, F1, F2, G1, G2, S1, S2,
+    create_public_params, create_recursive_circuit, EE1, EE2, F1, F2, G1, G2, S1, S2,
 };
 use nova_snark::{
     spartan::RelaxedR1CSSNARK,
@@ -154,8 +154,8 @@ pub async fn verify_compressed_proof(pp_str: String, proof_str: String) -> bool 
             G2,
             CircomCircuit<F1>,
             TrivialTestCircuit<F2>,
-            RelaxedR1CSSNARK<G1, EE1, CC1>,
-            RelaxedR1CSSNARK<G2, EE2, CC2>,
+            RelaxedR1CSSNARK<G1, EE1>,
+            RelaxedR1CSSNARK<G2, EE2>,
         >,
     >(&proof_str)
     .unwrap();

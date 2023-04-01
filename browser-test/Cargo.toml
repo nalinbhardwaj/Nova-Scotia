@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 nova-scotia = { path = "../" }
-nova-snark = { version = "0.19.0" }
+nova-snark = "0.20.0"
 num-bigint = { version = "0.4", features = ["serde", "rand"] }
 num-traits = "0.2.15"
 serde = "1.0"
