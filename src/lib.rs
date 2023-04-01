@@ -28,13 +28,11 @@ pub mod circom;
 pub type G1 = pasta_curves::pallas::Point;
 pub type F1 = <G1 as Group>::Scalar;
 pub type EE1 = nova_snark::provider::ipa_pc::EvaluationEngine<G1>;
-pub type CC1 = nova_snark::spartan::spark::TrivialCompComputationEngine<G1, EE1>;
-pub type S1 = nova_snark::spartan::RelaxedR1CSSNARK<G1, EE1, CC1>;
+pub type S1 = nova_snark::spartan::RelaxedR1CSSNARK<G1, EE1>;
 pub type G2 = pasta_curves::vesta::Point;
 pub type F2 = <G2 as Group>::Scalar;
 pub type EE2 = nova_snark::provider::ipa_pc::EvaluationEngine<G2>;
-pub type CC2 = nova_snark::spartan::spark::TrivialCompComputationEngine<G2, EE2>;
-pub type S2 = nova_snark::spartan::RelaxedR1CSSNARK<G2, EE2, CC2>;
+pub type S2 = nova_snark::spartan::RelaxedR1CSSNARK<G2, EE2>;
 
 type C1 = CircomCircuit<<G1 as Group>::Scalar>;
 type C2 = TrivialTestCircuit<<G2 as Group>::Scalar>;
