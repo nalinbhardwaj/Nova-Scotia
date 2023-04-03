@@ -34,28 +34,22 @@ pub type F2 = <G2 as Group>::Scalar;
 pub type EE2 = nova_snark::provider::ipa_pc::EvaluationEngine<G2>;
 pub type S2 = nova_snark::spartan::RelaxedR1CSSNARK<G2, EE2>;
 
-type C1 = CircomCircuit<<G1 as Group>::Scalar>;
-type C2 = TrivialTestCircuit<<G2 as Group>::Scalar>;
+pub type C1 = CircomCircuit<F1>;
+pub type C2 = TrivialTestCircuit<F2>;
 
 pub enum FileLocation {
     PathBuf(PathBuf),
     URL(String),
 }
 
-pub fn create_public_params(
-    r1cs: R1CS<F1>,
-) -> PublicParams<G1, G2, CircomCircuit<F1>, TrivialTestCircuit<F2>> {
+pub fn create_public_params(r1cs: R1CS<F1>) -> PublicParams<G1, G2, C1, C2> {
     let circuit_primary = CircomCircuit {
         r1cs,
         witness: None,
     };
     let circuit_secondary = TrivialTestCircuit::default();
 
-    let pp = PublicParams::<G1, G2, CircomCircuit<F1>, TrivialTestCircuit<F2>>::setup(
-        circuit_primary.clone(),
-        circuit_secondary.clone(),
-    );
-    pp
+    PublicParams::setup(circuit_primary.clone(), circuit_secondary.clone())
 }
 
 #[derive(Serialize, Deserialize)]
