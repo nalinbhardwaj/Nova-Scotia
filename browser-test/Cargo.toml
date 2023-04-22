@@ -25,3 +25,8 @@ js-sys = "0.3"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+
+[patch.crates-io]
+# DO NOT COMMIT
+nova-snark = { version = "0.20", default-features = false, git = "https://github.com/huitseeker/nova", branch="bump_ff_group"}
+# DO NOT COMMIT

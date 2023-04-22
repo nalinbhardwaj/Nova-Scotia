@@ -44,7 +44,7 @@ impl<'a, Fr: PrimeField> CircomCircuit<Fr> {
             // Public inputs do not exist, so we alloc, and later enforce equality from z values
             let f: Fr = {
                 match &self.witness {
-                    None => Fr::one(),
+                    None => Fr::ONE,
                     Some(w) => w[i],
                 }
             };
@@ -85,7 +85,7 @@ impl<'a, Fr: PrimeField> CircomCircuit<Fr> {
             // Public inputs do not exist, so we alloc, and later enforce equality from z values
             let f: Fr = {
                 match witness {
-                    None => Fr::one(),
+                    None => Fr::ONE,
                     Some(w) => w[i],
                 }
             };
@@ -101,7 +101,7 @@ impl<'a, Fr: PrimeField> CircomCircuit<Fr> {
             // Private witness trace
             let f: Fr = {
                 match witness {
-                    None => Fr::one(),
+                    None => Fr::ONE,
                     Some(w) => w[i + self.r1cs.num_inputs],
                 }
             };
