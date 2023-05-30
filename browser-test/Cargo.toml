@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 nova-scotia = { path = "../" }
-nova-snark = "0.20.0"
+nova-snark = { version = "0.21.0", default-features = false }
 num-bigint = { version = "0.4", features = ["serde", "rand"] }
 num-traits = "0.2.15"
 serde = "1.0"
@@ -25,3 +25,4 @@ js-sys = "0.3"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+

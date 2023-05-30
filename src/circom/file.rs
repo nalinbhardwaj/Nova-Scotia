@@ -36,7 +36,7 @@ pub struct R1CSFile<Fr: PrimeField> {
 }
 
 pub(crate) fn read_field<R: Read, Fr: PrimeField>(mut reader: R) -> Result<Fr> {
-    let mut repr = Fr::zero().to_repr();
+    let mut repr = Fr::ZERO.to_repr();
     for digit in repr.as_mut().iter_mut() {
         // TODO: may need to reverse order?
         *digit = reader.read_u8()?;
