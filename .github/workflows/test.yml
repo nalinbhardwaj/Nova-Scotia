@@ -4,13 +4,12 @@ env:
   NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
   NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
 jobs:
-  check-toy-example-wasm:
+  check-toy-example-bn254:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: nalinbhardwaj/circom
-          ref: pasta
+          repository: iden3/circom
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -28,14 +27,13 @@ jobs:
         with:
           node-version: "16"
       - run: bash ./examples/toy/compile.sh
-      - run: cargo run --release --example toy_wasm
-  check-toy-example-cpp:
+      - run: cargo run --release --example toy_bn254
+  check-toy-example-pasta:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: nalinbhardwaj/circom
-          ref: pasta
+          repository: iden3/circom
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -53,15 +51,15 @@ jobs:
         with:
           node-version: "16"
       - run: bash ./examples/toy/compile.sh
-      - run: cargo run --release --example toy
+      - run: cargo run --release --example toy_pasta
   check-toy-example-browser:
     runs-on: ubuntu-latest
     steps:
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2022-08-09
+          toolchain: nightly-2022-12-12
       - run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       - uses: actions/checkout@v3
-      - run: rustup component add rust-src --toolchain nightly-2022-08-09-x86_64-unknown-linux-gnu
+      - run: rustup component add rust-src --toolchain nightly-2022-12-12-x86_64-unknown-linux-gnu
       - run: cd browser-test && wasm-pack build --target web --out-dir test-client/public/pkg
       - run: cd browser-test/test-client && yarn install && CI=false yarn build

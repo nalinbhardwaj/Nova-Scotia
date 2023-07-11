@@ -12,15 +12,15 @@ Nova is the state of the art for recursive SNARKs, Circom is the state of the ar
 
 As [Justin Drake talks about it](https://youtu.be/SwonTtOQzAk), I think the right way to think of Nova is as a preprocessor for zkSNARKs with lots of repeated structure -- Nova can shrink the cost (in number of R1CS constraints) of checking N instances of a problem to ~one instance of the same problem. This is clean and magical and lends itself well to a world where we take the output of Nova and then verify it in a "real" zkSNARK (like PLONK/groth16/Spartan) to obtain a actually fully minified proof (that is sublinear even in the size of one instance). Notably, [this pattern is already used](https://youtu.be/VmYpbFxBdtM?t=155) in settings like [zkEVMs](https://youtu.be/j7An-33_Zs0), but with STARK proofs instead of Nova proofs. IMO, Nova (and folding scheme-like things in particular) lend themselves better to the properties we want with the preprocessing layer vs. STARKs: fast compression, minimal cryptographic assumptions and low recursive overhead.[^1]
 
+Nova Scotia comes with extensive [examples](https://github.com/nalinbhardwaj/Nova-Scotia/tree/main/examples), as well as a [in-browser usage example](https://github.com/nalinbhardwaj/Nova-Scotia/tree/main/browser-test). We will describe the proving/verifying workflow in more detail below.
+
 [^1]: But currently, Nova/R1CS lacks the customizability of STARKS (custom gates and lookup tables in particular), so there is a tradeoff here.
 
 ## How?
 
 ![Nova Scotia](https://user-images.githubusercontent.com/6984346/201644973-fb084b6c-3807-4bf4-99bf-a1461271f1b5.png)
 
-To use it yourself, install this branch of [Circom](https://docs.circom.io) which adds support for the [Pasta Curves](https://electriccoin.co/blog/the-pasta-curves-for-halo-2-and-beyond/) to the C++ witness generator: [nalinbhardwaj/pasta](https://github.com/nalinbhardwaj/circom/tree/pasta). To install this branch, clone the git repo (using `git clone https://github.com/nalinbhardwaj/circom.git && git checkout pasta`). Then build and install the `circom` binary by running `cargo install --path circom`. This will overwrite any existing `circom` binary. Refer to the [Circom documentation](https://docs.circom.io/getting-started/installation/#installing-dependencies) for more information.
-
-Note that if you are interested in generating and verifying proofs in browsers, you must use the WASM witness generator. We will describe in-browser proving and verification later in the README.
+To use it yourself, start by installing [Circom](https://docs.circom.io) as described in the [Circom documentation](https://docs.circom.io/getting-started/installation/#installing-dependencies).
 
 ### Writing Nova Step Circuits in Circom
 
@@ -28,24 +28,30 @@ To write Nova Scotia circuits in Circom, we operate on the abstraction of one st
 
 When you're ready, compile your circuit using `circom [file].circom --r1cs --sym --c --prime vesta` for the vesta curve. Compile the C++ witness generator in `[file]_cpp` by running `make` in that folder. Alternately, you can compile the WASM witness generator using `circom [file].circom --r1cs --sym --wasm --prime vesta`.  We will later use the R1CS file and the witness generator binary (either C++ binary or WASM), so make note of their filepaths. You can independently test these step circuits by running witness generation as described in the [Circom documentation](https://docs.circom.io/getting-started/computing-the-witness/).
 
+Since Nova runs on a cycle of elliptic curves, you must specify the curve via traits and in the Circom compilation command. Currently, Nova Scotia supports any cycle supported by Nova upstream in [provider](https://github.com/microsoft/Nova/tree/main/src/provider) and by Circom's `--prime` flag. You can see example circuits for both the [Pasta (pallas/vesta)](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/toy_pasta.rs) and [bn254/grumpkin](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/toy_bn254.rs) curves in the examples directory.
+
 ### Rust shimming for Nova Scotia
 
-Now, start a new Rust project and add Nova Scotia to your dependencies. Then, you can start using your Circom step circuits with Nova. Start by defining the paths to the Circom output and loading the R1CS file:
+Start a new Rust project and add Nova Scotia to your dependencies. Then, you can start using your Circom step circuits with Nova. Start by defining the paths to the Circom output and loading the R1CS file:
 
 ```rust
+// The cycle of curves we use, can be any cycle supported by Nova
+type G1 = pasta_curves::pallas::Point;
+type G2 = pasta_curves::vesta::Point;
+
 let circuit_file = root.join("examples/bitcoin/circom/bitcoin_benchmark.r1cs");
 let witness_generator_file =
     root.join("examples/bitcoin/circom/bitcoin_benchmark_cpp/bitcoin_benchmark");
 
-let r1cs = load_r1cs(&circuit_file); // loads R1CS file into memory
+let r1cs = load_r1cs::<G1, G2>(&circuit_file); // loads R1CS file into memory
 ```
 
-Circom supports witness generation using both C++ and WASM, so you can choose which one to use by passing `witness_generator_file` either as the generated C++ binary or as the WASM output of Circom (the `circuit.wasm` file). If you use WASM, we assume you have a compatible version of `node` installed on your system.
+Circom supports witness generation using both C++ and WASM, so you can choose which one to use by passing `witness_generator_file` either as the generated C++ binary or as the WASM output of Circom (the `circuit.wasm` file). If you use WASM, we assume you have a compatible version of `node` installed on your system. Note that for proving locally, we recommend using the C++ witness generator for performance (except on M1/M2 Macs where it is not supported). For in-browser proving/verifying, you must use the WASM witness generator. We will describe in-browser proving and verification workflow later in the README.
 
 Then, create the public parameters (CRS) using the `create_public_params` function:
 
 ```rust
-let pp = create_public_params(r1cs.clone());
+let pp = create_public_params::<G1, G2>(r1cs.clone());
 ```
 
 Now, construct the input to Circom witness generator at each step of recursion. This is a HashMap representation of the JSON input to your Circom input. For instance, in the case of the [bitcoin](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin.rs#L40) example, `private_inputs` is a list of `HashMap`s, each containing block headers and block hashes for the blocks that step of recursion verifies, and the public input `step_in` is the previous block hash in the chain.
@@ -54,15 +60,15 @@ To instantiate this recursion, we use `create_recursive_circuit` from Nova Scoti
 
 ```rust
 let recursive_snark = create_recursive_circuit(
-    witness_generator_file,
+    FileLocation::PathBuf(witness_generator_file),
     r1cs,
     private_inputs,
-    start_public_input.clone(),
+    start_public_input.to_vec(),
     &pp,
 ).unwrap();
 ```
 
-Verification is done using the `verify` function defined by Nova, which additionally takes secondary inputs that Nova Scotia will initialise to `vec![<G2 as Group>::Scalar::zero()]`, so just pass that in:
+Verification is done using the `verify` function defined by Nova, which additionally takes secondary inputs that Nova Scotia will initialise to `[F<G2>::zero()]`, so just pass that in:
 
 ```rust
 println!("Verifying a RecursiveSNARK...");
@@ -70,8 +76,8 @@ let start = Instant::now();
 let res = recursive_snark.verify(
     &pp,
     iteration_count,
-    start_public_input.clone(),
-    vec![<G2 as Group>::Scalar::zero()],
+    &start_public_input.clone(),
+    &[F<G2>::zero()],
 );
 println!(
     "RecursiveSNARK::verify: {:?}, took {:?}",
@@ -94,11 +100,11 @@ bitcoin.rs is a more complex example that uses Nova to create a prover for bitco
 
 | Number of recursion steps | Blocks verified per step | Prover time | Verifier time (uncompressed) |
 | ------------------------- | ------------------------ | ----------- | ---------------------------- |
-| 120                       | 1                        | 57.33s      | 197.20ms                     |
-| 60                        | 2                        | 46.11s      | 307.08ms                     |
-| 40                        | 3                        | 43.60s      | 449.02ms                     |
-| 30                        | 4                        | 41.17s      | 560.53ms                     |
-| 24                        | 5                        | 39.73s      | 728.09ms                     |
+| 120                       | 1                        | 55.38s      | 214.43ms                     |
+| 60                        | 2                        | 49.05s      | 434.96ms                     |
+| 40                        | 3                        | 42.08s      | 509.03ms                     |
+| 30                        | 4                        | 45.40s      | 923.23ms                     |
+| 24                        | 5                        | 48.43s      | 991.89ms                     |
 
 Note that the verification times are linear in the number of blocks per step of recursion, while the proving time reduces with fewer recursive steps. In practice, you would use the output of Nova as an input to another SNARK scheme like Plonk/groth16 (as previously mentioned) to obtain full succinctness.
 
@@ -112,15 +118,7 @@ Nova Scotia also supports proving and verification of proofs in browser, along w
 
 ## Notes for interested contributors
 
-### TODO list
-
-- [ ] Switch Nova to BN254/grumpkin cycle to make it work on Ethereum chain! This should be doable since Nova only needs DLOG hardness.
-- [ ] Write Relaxed R1CS verifiers in plonk/groth16 libraries (ex. Halo 2, Circom).
-- [ ] Make Nova work with secp/secq cycle for efficient ECDSA signature verification + aggregation
-
-Seperately, since Nova's `StepCircuit` trait is pretty much the same as Bellperson's `Circuit` trait, we can probably also use the transpilation in this repo to use [Bellperson](https://github.com/filecoin-project/bellperson) with Circom circuits/proofs, along with its [snarkpack](https://eprint.iacr.org/2021/529) aggregation features.
-
-If you are interested in any of these tasks and want to work on them, please reach out! [0xPARC's PARC Squad](https://0xparc.org/blog/parc-squad) may also be able to provide financial and technical support for related work.
+Please see [GitHub issues](https://github.com/nalinbhardwaj/Nova-Scotia/issues) if you are interested in contributing. You can reach out to me directly on Telegram at @nibnalin if you have any questions.
 
 ### Credits
 

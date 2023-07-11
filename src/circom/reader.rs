@@ -14,9 +14,7 @@ use crate::circom::circuit::{CircuitJson, R1CS};
 use crate::circom::file::{from_reader, read_field};
 use crate::FileLocation;
 use ff::PrimeField;
-use pasta_curves::group::Group;
-
-type G1 = pasta_curves::pallas::Point;
+use nova_snark::traits::Group;
 
 pub fn generate_witness_from_bin<Fr: PrimeField>(
     witness_bin: &Path,
@@ -172,7 +170,11 @@ pub(crate) fn load_witness_from_bin_reader<Fr: PrimeField, R: Read>(
 
 #[cfg(not(target_family = "wasm"))]
 /// load r1cs file by filename with autodetect encoding (bin or json)
-pub fn load_r1cs(filename: &FileLocation) -> R1CS<<G1 as Group>::Scalar> {
+pub fn load_r1cs<G1, G2>(filename: &FileLocation) -> R1CS<<G1 as Group>::Scalar>
+where
+    G1: Group<Base = <G2 as Group>::Scalar>,
+    G2: Group<Base = <G1 as Group>::Scalar>,
+{
     let filename = match filename {
         FileLocation::PathBuf(filename) => filename,
         FileLocation::URL(_) => panic!("unreachable"),
@@ -180,7 +182,7 @@ pub fn load_r1cs(filename: &FileLocation) -> R1CS<<G1 as Group>::Scalar> {
     if filename.ends_with("json") {
         load_r1cs_from_json_file(filename)
     } else {
-        load_r1cs_from_bin_file(filename)
+        load_r1cs_from_bin_file::<G1, G2>(filename)
     }
 }
 
@@ -230,17 +232,25 @@ fn load_r1cs_from_json<Fr: PrimeField, R: Read>(reader: R) -> R1CS<Fr> {
 }
 
 /// load r1cs from bin file by filename
-fn load_r1cs_from_bin_file(filename: &Path) -> R1CS<<G1 as Group>::Scalar> {
+fn load_r1cs_from_bin_file<G1, G2>(filename: &Path) -> R1CS<<G1 as Group>::Scalar>
+where
+    G1: Group<Base = <G2 as Group>::Scalar>,
+    G2: Group<Base = <G1 as Group>::Scalar>,
+{
     let reader = OpenOptions::new()
         .read(true)
         .open(filename)
         .expect("unable to open.");
-    load_r1cs_from_bin(BufReader::new(reader))
+    load_r1cs_from_bin::<_, G1, G2>(BufReader::new(reader))
 }
 
 /// load r1cs from bin by a reader
-pub(crate) fn load_r1cs_from_bin<R: Read + Seek>(reader: R) -> R1CS<<G1 as Group>::Scalar> {
-    let file = from_reader(reader).expect("unable to read.");
+pub(crate) fn load_r1cs_from_bin<R: Read + Seek, G1, G2>(reader: R) -> R1CS<<G1 as Group>::Scalar>
+where
+    G1: Group<Base = <G2 as Group>::Scalar>,
+    G2: Group<Base = <G1 as Group>::Scalar>,
+{
+    let file = from_reader::<_, G1, G2>(reader).expect("unable to read.");
     let num_inputs = (1 + file.header.n_pub_in + file.header.n_pub_out) as usize;
     let num_variables = file.header.n_wires as usize;
     let num_aux = num_variables - num_inputs;
