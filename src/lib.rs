@@ -1,9 +1,6 @@
-use std::{
-    collections::HashMap,
-    env::current_dir,
-    fs,
-    path::{Path, PathBuf},
-};
+#[cfg(target_family = "wasm")]
+use std::path::Path;
+use std::{collections::HashMap, env::current_dir, fs, path::PathBuf};
 
 use circom::circuit::{CircomCircuit, R1CS};
 use nova_snark::{
@@ -81,6 +78,7 @@ pub fn create_recursive_circuit(
 
     let circuit_secondary = TrivialTestCircuit::default();
     let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
+
     let mut recursive_snark: Option<RecursiveSNARK<G1, G2, C1, C2>> = None;
 
     for i in 0..iteration_count {
@@ -129,16 +127,25 @@ pub fn create_recursive_circuit(
             .map(|&x| format!("{:?}", x).strip_prefix("0x").unwrap().to_string())
             .collect();
 
-        let res = RecursiveSNARK::prove_step(
-            &pp,
-            recursive_snark,
-            circuit.clone(),
-            circuit_secondary.clone(),
-            start_public_input.clone(),
-            z0_secondary.clone(),
-        );
-        assert!(res.is_ok());
-        recursive_snark = Some(res.unwrap());
+        let mut r_snark = recursive_snark.unwrap_or_else(|| {
+            RecursiveSNARK::new(
+                pp,
+                &circuit,
+                &circuit_secondary,
+                start_public_input.clone(),
+                z0_secondary.clone(),
+            )
+        });
+        r_snark
+            .prove_step(
+                &pp,
+                &circuit,
+                &circuit_secondary,
+                start_public_input.clone(),
+                z0_secondary.clone(),
+            )
+            .expect("failure to prove Nova step");
+        recursive_snark = Some(r_snark);
     }
     fs::remove_file(witness_generator_output)?;
 
@@ -213,26 +220,26 @@ pub async fn create_recursive_circuit(
     }
 
     let circuit_secondary = TrivialTestCircuit::default();
-
-    let mut recursive_snark: Option<RecursiveSNARK<G1, G2, C1, C2>> = None;
-
     let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
 
+    let mut recursive_snark = RecursiveSNARK::new(
+        pp,
+        &circuit_iterations[0],
+        &circuit_secondary,
+        start_public_input.clone(),
+        z0_secondary.clone(),
+    );
+
     for i in 0..iteration_count {
-        let res = RecursiveSNARK::prove_step(
+        recursive_snark.prove_step(
             &pp,
-            recursive_snark,
-            circuit_iterations[i].clone(),
-            circuit_secondary.clone(),
+            &circuit_iterations[i],
+            &circuit_secondary,
             start_public_input.clone(),
             z0_secondary.clone(),
-        );
-
-        assert!(res.is_ok());
-        recursive_snark = Some(res.unwrap());
+        )
+        .expect("failure to prove Nova step");
     }
-
-    let recursive_snark = recursive_snark.unwrap();
 
     Ok(recursive_snark)
 }

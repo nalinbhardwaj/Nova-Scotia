@@ -19,7 +19,7 @@ byteorder = "1.4.3"
 ff = { version = "0.13", features = ["derive"]}
 hex-literal = "0.3.4"
 itertools = "0.9.0"
-nova-snark = { version = "0.21.0", default-features = false }
+nova-snark = { version = "0.22.0", default-features = false }
 num-bigint = { version = "0.4", features = ["serde", "rand"] }
 num-traits = "0.2.15"
 pasta_curves = { version = "0.5.1", features = ["repr-c", "serde"] }

@@ -102,8 +102,8 @@ fn bench(iteration_count: usize, per_iteration_count: usize) -> (Duration, Durat
     let res = recursive_snark.verify(
         &pp,
         iteration_count,
-        start_public_input.clone(),
-        z0_secondary.clone(),
+        &start_public_input.clone(),
+        &z0_secondary.clone(),
     );
     println!(
         "RecursiveSNARK::verify: {:?}, took {:?}",
@@ -133,8 +133,8 @@ fn bench(iteration_count: usize, per_iteration_count: usize) -> (Duration, Durat
     // let res = compressed_snark.verify(
     //     &pp,
     //     iteration_count,
-    //     start_public_input.clone(),
-    //     z0_secondary,
+    //     &start_public_input.clone(),
+    //     &z0_secondary,
     // );
     // println!(
     //     "CompressedSNARK::verify: {:?}, took {:?}",
