@@ -27,7 +27,7 @@ pub mod circom;
 
 pub type F<G> = <G as Group>::Scalar;
 pub type EE<G> = nova_snark::provider::ipa_pc::EvaluationEngine<G>;
-pub type S<G> = nova_snark::spartan::RelaxedR1CSSNARK<G, EE<G>>;
+pub type S<G> = nova_snark::spartan::snark::RelaxedR1CSSNARK<G, EE<G>>;
 pub type C1<G> = CircomCircuit<<G as Group>::Scalar>;
 pub type C2<G> = TrivialTestCircuit<<G as Group>::Scalar>;
 
