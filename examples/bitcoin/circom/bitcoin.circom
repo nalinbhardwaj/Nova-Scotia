@@ -174,7 +174,7 @@ template CheckOneBlock() {
 
 template Main(BLOCK_COUNT) {
     signal input step_in[2];
-    signal output lastBlockHash[2];
+    signal output step_out[2]; // last block hash
     signal input blockHashes[BLOCK_COUNT][2];
     signal input blockHeaders[BLOCK_COUNT][80];
 
@@ -196,7 +196,7 @@ template Main(BLOCK_COUNT) {
             checker[i].blockHeaders[j] <== blockHeaders[i][j];
         }
     }
-    for (var j = 0;j < 2;j++) lastBlockHash[j] <== blockHashes[BLOCK_COUNT - 1][j];
+    for (var j = 0;j < 2;j++) step_out[j] <== blockHashes[BLOCK_COUNT - 1][j];
 }
 
 component main { public [step_in] } = Main(1);

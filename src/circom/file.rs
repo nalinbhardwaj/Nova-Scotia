@@ -4,14 +4,12 @@
 use crate::circom::circuit::Constraint;
 use byteorder::{LittleEndian, ReadBytesExt};
 use ff::PrimeField;
-use pasta_curves::group::Group;
+use hex_literal::hex;
+use nova_snark::traits::Group;
 use std::{
     collections::HashMap,
     io::{Error, ErrorKind, Read, Result, Seek, SeekFrom},
 };
-
-type G1 = pasta_curves::pallas::Point;
-type G2 = pasta_curves::vesta::Point;
 
 // R1CSFile's header
 #[derive(Debug, Default)]
@@ -120,7 +118,11 @@ fn read_map<R: Read>(mut reader: R, size: u64, header: &Header) -> Result<Vec<u6
     Ok(vec)
 }
 
-pub fn from_reader<R: Read + Seek>(mut reader: R) -> Result<R1CSFile<<G1 as Group>::Scalar>> {
+pub fn from_reader<R: Read + Seek, G1, G2>(mut reader: R) -> Result<R1CSFile<<G1 as Group>::Scalar>>
+where
+    G1: Group<Base = <G2 as Group>::Scalar>,
+    G2: Group<Base = <G1 as Group>::Scalar>,
+{
     let mut magic = [0u8; 4];
     reader.read_exact(&mut magic)?;
     if magic != [0x72, 0x31, 0x63, 0x73] {
@@ -161,8 +163,14 @@ pub fn from_reader<R: Read + Seek>(mut reader: R) -> Result<R1CSFile<<G1 as Grou
             "This parser only supports 32-byte fields",
         ));
     }
-    // if header.prime_size != hex!("010000f093f5e1439170b97948e833285d588181b64550b829a031e1724e6430") {
-    //     return Err(Error::new(ErrorKind::InvalidData, "This parser only supports bn256"));
+
+    // println!("header: {:?}", header);
+    // if header.prime_size != hex!("010000f093f5e1439170b97948e833285d588181b64550b829a031e1724e6430")
+    // {
+    //     return Err(Error::new(
+    //         ErrorKind::InvalidData,
+    //         "This parser only supports bn256",
+    //     ));
     // }
 
     reader.seek(SeekFrom::Start(
@@ -250,8 +258,11 @@ mod tests {
     "
         );
 
+        type G1 = pasta_curves::pallas::Point;
+        type G2 = pasta_curves::vesta::Point;
+
         let reader = BufReader::new(Cursor::new(&data[..]));
-        let file = from_reader(reader).unwrap();
+        let file = from_reader::<_, G1, G2>(reader).unwrap();
         assert_eq!(file.version, 1);
 
         assert_eq!(file.header.field_size, 32);

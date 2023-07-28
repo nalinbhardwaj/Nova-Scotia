@@ -1,4 +1,4 @@
-use crate::{FileLocation, G1, R1CS};
+use crate::{FileLocation, R1CS};
 
 use crate::circom::reader::{load_r1cs_from_bin, load_witness_from_bin_reader};
 use ff::PrimeField;
@@ -43,14 +43,18 @@ pub async fn generate_witness_browser(input_json_string: &str, wasm_file: &str) 
 
 #[cfg(target_family = "wasm")]
 /// load r1cs file by filename with autodetect encoding (bin or json)
-pub async fn load_r1cs(filename: &FileLocation) -> R1CS<<G1 as Group>::Scalar> {
+pub async fn load_r1cs<G1, G2>(filename: &FileLocation) -> R1CS<<G1 as Group>::Scalar>
+where
+    G1: Group<Base = <G2 as Group>::Scalar>,
+    G2: Group<Base = <G1 as Group>::Scalar>,
+{
     let filename = match filename {
         FileLocation::PathBuf(_) => panic!("unreachable"),
         FileLocation::URL(path) => path,
     };
     let r1cs_ser = read_file(filename).await.to_vec();
     let r1cs_cursor = Cursor::new(r1cs_ser);
-    load_r1cs_from_bin(r1cs_cursor)
+    load_r1cs_from_bin::<_, G1, G2>(r1cs_cursor)
 }
 
 #[cfg(target_family = "wasm")]

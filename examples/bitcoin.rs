@@ -7,7 +7,7 @@ use std::{
 
 use ff::PrimeField;
 use nova_scotia::{
-    circom::reader::load_r1cs, create_public_params, create_recursive_circuit, FileLocation, F1, G2,
+    circom::reader::load_r1cs, create_public_params, create_recursive_circuit, FileLocation, F,
 };
 use nova_snark::traits::Group;
 use serde::{Deserialize, Serialize};
@@ -22,10 +22,13 @@ struct Blocks {
 }
 
 fn bench(iteration_count: usize, per_iteration_count: usize) -> (Duration, Duration) {
+    type G1 = pasta_curves::pallas::Point;
+    type G2 = pasta_curves::vesta::Point;
+
     let root = current_dir().unwrap();
 
     let circuit_file = root.join("examples/bitcoin/circom/bitcoin_benchmark.r1cs");
-    let r1cs = load_r1cs(&FileLocation::PathBuf(circuit_file));
+    let r1cs = load_r1cs::<G1, G2>(&FileLocation::PathBuf(circuit_file));
     let witness_generator_file =
         root.join("examples/bitcoin/circom/bitcoin_benchmark_cpp/bitcoin_benchmark");
 
@@ -33,9 +36,9 @@ fn bench(iteration_count: usize, per_iteration_count: usize) -> (Duration, Durat
     let btc_blocks: Blocks =
         serde_json::from_str(include_str!("bitcoin/fetcher/btc-blocks.json")).unwrap();
 
-    let start_public_input = vec![
-        F1::from_str_vartime(&btc_blocks.prevBlockHash[0]).unwrap(),
-        F1::from_str_vartime(&btc_blocks.prevBlockHash[1]).unwrap(),
+    let start_public_input = [
+        F::<G1>::from_str_vartime(&btc_blocks.prevBlockHash[0]).unwrap(),
+        F::<G1>::from_str_vartime(&btc_blocks.prevBlockHash[1]).unwrap(),
     ];
 
     let mut private_inputs = Vec::new();
@@ -61,7 +64,7 @@ fn bench(iteration_count: usize, per_iteration_count: usize) -> (Duration, Durat
 
     // println!("{:?} {:?}", start_public_input, private_inputs);
 
-    let pp = create_public_params(r1cs.clone());
+    let pp = create_public_params::<G1, G2>(r1cs.clone());
 
     println!(
         "Number of constraints per step (primary circuit): {}",
@@ -87,24 +90,19 @@ fn bench(iteration_count: usize, per_iteration_count: usize) -> (Duration, Durat
         FileLocation::PathBuf(witness_generator_file),
         r1cs,
         private_inputs,
-        start_public_input.clone(),
+        start_public_input.to_vec(),
         &pp,
     )
     .unwrap();
     let prover_time = start.elapsed();
     println!("RecursiveSNARK creation took {:?}", start.elapsed());
 
-    let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
+    let z0_secondary = [<G2 as Group>::Scalar::zero()];
 
     // verify the recursive SNARK
     println!("Verifying a RecursiveSNARK...");
     let start = Instant::now();
-    let res = recursive_snark.verify(
-        &pp,
-        iteration_count,
-        start_public_input.clone(),
-        z0_secondary.clone(),
-    );
+    let res = recursive_snark.verify(&pp, iteration_count, &start_public_input, &z0_secondary);
     println!(
         "RecursiveSNARK::verify: {:?}, took {:?}",
         res,

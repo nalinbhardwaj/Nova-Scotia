@@ -1,12 +1,10 @@
 use std::collections::HashMap;
 
-use nova_scotia::FileLocation;
 use nova_scotia::{
     circom::{circuit::CircomCircuit, reader::load_r1cs},
-    create_public_params, create_recursive_circuit, EE1, EE2, F1, F2, G1, G2, S1, S2,
+    create_public_params, create_recursive_circuit, FileLocation, F, S,
 };
 use nova_snark::{
-    spartan::RelaxedR1CSSNARK,
     traits::{circuit::TrivialTestCircuit, Group},
     CompressedSNARK, PublicParams,
 };
@@ -48,13 +46,16 @@ pub fn init_panic_hook() {
 
 const WEBSITE_ROOT: &str = "https://effulgent-liger-07e9d0.netlify.app/";
 
+type G1 = pasta_curves::pallas::Point;
+type G2 = pasta_curves::vesta::Point;
+
 #[wasm_bindgen]
 pub async fn generate_params() -> String {
-    let r1cs = load_r1cs(&FileLocation::URL(
+    let r1cs = load_r1cs::<G1, G2>(&FileLocation::URL(
         WEBSITE_ROOT.to_string().clone() + &"toy.r1cs".to_string(),
     ))
     .await;
-    let pp = create_public_params(r1cs.clone());
+    let pp: PublicParams<G1, G2, _, _> = create_public_params(r1cs.clone());
     let serialised = serde_json::to_string(&pp).unwrap();
     return serialised;
 }
@@ -63,7 +64,7 @@ pub async fn generate_params() -> String {
 pub async fn generate_proof(pp_str: String) -> String {
     let iteration_count = 5;
 
-    let r1cs = load_r1cs(&FileLocation::URL(
+    let r1cs = load_r1cs::<G1, G2>(&FileLocation::URL(
         WEBSITE_ROOT.to_string().clone() + &"toy.r1cs".to_string(),
     ))
     .await;
@@ -77,13 +78,12 @@ pub async fn generate_proof(pp_str: String) -> String {
         private_inputs.push(private_input);
     }
 
-    let start_public_input = vec![F1::from(10), F1::from(10)];
+    let start_public_input = [F::<G1>::from(10), F::<G1>::from(10)];
 
-    let pp =
-        serde_json::from_str::<PublicParams<G1, G2, CircomCircuit<F1>, TrivialTestCircuit<F2>>>(
-            &pp_str,
-        )
-        .unwrap();
+    let pp = serde_json::from_str::<
+        PublicParams<G1, G2, CircomCircuit<F<G1>>, TrivialTestCircuit<F<G2>>>,
+    >(&pp_str)
+    .unwrap();
 
     console_log!(
         "Number of constraints per step (primary circuit): {}",
@@ -108,29 +108,24 @@ pub async fn generate_proof(pp_str: String) -> String {
         witness_generator_wasm,
         r1cs,
         private_inputs,
-        start_public_input.clone(),
+        start_public_input.to_vec(),
         &pp,
     )
     .await
     .unwrap();
 
     // TODO: empty?
-    let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
+    let z0_secondary = [F::<G2>::zero()];
 
     // verify the recursive SNARK
     console_log!("Verifying a RecursiveSNARK...");
-    let res = recursive_snark.verify(
-        &pp,
-        iteration_count,
-        start_public_input.clone(),
-        z0_secondary.clone(),
-    );
+    let res = recursive_snark.verify(&pp, iteration_count, &start_public_input, &z0_secondary);
     assert!(res.is_ok());
 
     // produce a compressed SNARK
     console_log!("Generating a CompressedSNARK using Spartan with IPA-PC...");
-    let (pk, _vk) = CompressedSNARK::<_, _, _, _, S1, S2>::setup(&pp).unwrap();
-    let res = CompressedSNARK::<_, _, _, _, S1, S2>::prove(&pp, &pk, &recursive_snark);
+    let (pk, _vk) = CompressedSNARK::<_, _, _, _, S<G1>, S<G2>>::setup(&pp).unwrap();
+    let res = CompressedSNARK::<_, _, _, _, S<G1>, S<G2>>::prove(&pp, &pk, &recursive_snark);
     assert!(res.is_ok());
     let compressed_snark = res.unwrap();
     return serde_json::to_string(&compressed_snark).unwrap();
@@ -138,25 +133,17 @@ pub async fn generate_proof(pp_str: String) -> String {
 
 #[wasm_bindgen]
 pub async fn verify_compressed_proof(pp_str: String, proof_str: String) -> bool {
-    let pp =
-        serde_json::from_str::<PublicParams<G1, G2, CircomCircuit<F1>, TrivialTestCircuit<F2>>>(
-            &pp_str,
-        )
-        .unwrap();
-    let (_pk, vk) = CompressedSNARK::<_, _, _, _, S1, S2>::setup(&pp).unwrap();
+    let pp = serde_json::from_str::<
+        PublicParams<G1, G2, CircomCircuit<F<G1>>, TrivialTestCircuit<F<G2>>>,
+    >(&pp_str)
+    .unwrap();
+    let (_pk, vk) = CompressedSNARK::<_, _, _, _, S<G1>, S<G2>>::setup(&pp).unwrap();
     let iteration_count = 5;
-    let start_public_input = vec![F1::from(10), F1::from(10)];
-    let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
+    let start_public_input = vec![F::<G1>::from(10), F::<G1>::from(10)];
+    let z0_secondary = vec![F::<G2>::zero()];
 
     let compressed_proof = serde_json::from_str::<
-        CompressedSNARK<
-            G1,
-            G2,
-            CircomCircuit<F1>,
-            TrivialTestCircuit<F2>,
-            RelaxedR1CSSNARK<G1, EE1>,
-            RelaxedR1CSSNARK<G2, EE2>,
-        >,
+        CompressedSNARK<G1, G2, CircomCircuit<F<G1>>, TrivialTestCircuit<F<G2>>, S<G1>, S<G2>>,
     >(&proof_str)
     .unwrap();
     let res = compressed_proof.verify(
