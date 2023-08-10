@@ -363,12 +363,14 @@ where
 
 #[cfg(target_family = "wasm")]
 pub async fn add_step<G1, G2>(
+    recursive_snark: &mut RecursiveSNARK<G1, G2, C1<G1>, C2<G2>>,
+    last_zi: Vec<F<G1>>,
     witness_generator_file: FileLocation,
     r1cs: R1CS<F<G1>>,
-    private_inputs: Vec<HashMap<String, Value>>,
+    private_input: HashMap<String, Value>,
     start_public_input: Vec<F<G1>>,
     pp: &PublicParams<G1, G2, C1<G1>, C2<G2>>,
-) -> Result<RecursiveSNARK<G1, G2, C1<G1>, C2<G2>>, std::io::Error>
+) -> Result<(), std::io::Error>
 where
     G1: Group<Base = <G2 as Group>::Scalar>,
     G2: Group<Base = <G1 as Group>::Scalar>,
@@ -408,5 +410,5 @@ where
 
     fs::remove_file(witness_generator_output)?;
 
-    Ok(recursive_snark)
+    Ok(())
 }
