@@ -309,3 +309,104 @@ where
 
     Ok(recursive_snark)
 }
+
+#[cfg(not(target_family = "wasm"))]
+pub fn add_step<G1, G2>(
+    recursive_snark: &mut RecursiveSNARK<G1, G2, C1<G1>, C2<G2>>,
+    last_zi: Vec<F<G1>>,
+    witness_generator_file: FileLocation,
+    r1cs: R1CS<F<G1>>,
+    private_input: HashMap<String, Value>,
+    start_public_input: Vec<F<G1>>,
+    pp: &PublicParams<G1, G2, C1<G1>, C2<G2>>,
+) -> Result<(), std::io::Error>
+where
+    G1: Group<Base = <G2 as Group>::Scalar>,
+    G2: Group<Base = <G1 as Group>::Scalar>,
+{
+    let root = current_dir().unwrap();
+    let witness_generator_output = root.join("circom_witness.wtns");
+
+    let current_public_input = last_zi
+        .iter()
+        .map(|&x| format!("{:?}", x).strip_prefix("0x").unwrap().to_string())
+        .collect::<Vec<String>>();
+
+    let witness = compute_witness::<G1, G2>(
+        current_public_input,
+        private_input,
+        witness_generator_file,
+        &witness_generator_output,
+    );
+
+    let circuit = CircomCircuit {
+        r1cs,
+        witness: Some(witness),
+    };
+    let circuit_secondary = TrivialTestCircuit::default();
+    let z0_secondary = vec![G2::Scalar::ZERO];
+
+    let res = recursive_snark.prove_step(
+        pp,
+        &circuit,
+        &circuit_secondary,
+        start_public_input,
+        z0_secondary,
+    );
+
+    assert!(res.is_ok());
+
+    fs::remove_file(witness_generator_output)?;
+
+    Ok(())
+}
+
+#[cfg(target_family = "wasm")]
+pub async fn add_step<G1, G2>(
+    witness_generator_file: FileLocation,
+    r1cs: R1CS<F<G1>>,
+    private_inputs: Vec<HashMap<String, Value>>,
+    start_public_input: Vec<F<G1>>,
+    pp: &PublicParams<G1, G2, C1<G1>, C2<G2>>,
+) -> Result<RecursiveSNARK<G1, G2, C1<G1>, C2<G2>>, std::io::Error>
+where
+    G1: Group<Base = <G2 as Group>::Scalar>,
+    G2: Group<Base = <G1 as Group>::Scalar>,
+{
+    let root = current_dir().unwrap();
+    let witness_generator_output = root.join("circom_witness.wtns");
+
+    let current_public_input = last_zi
+        .iter()
+        .map(|&x| format!("{:?}", x).strip_prefix("0x").unwrap().to_string())
+        .collect::<Vec<String>>();
+
+    let witness = compute_witness::<G1, G2>(
+        current_public_input,
+        private_input,
+        witness_generator_file,
+        &witness_generator_output,
+    )
+    .await;
+
+    let circuit = CircomCircuit {
+        r1cs,
+        witness: Some(witness),
+    };
+    let circuit_secondary = TrivialTestCircuit::default();
+    let z0_secondary = vec![G2::Scalar::ZERO];
+
+    let res = recursive_snark.prove_step(
+        pp,
+        &circuit,
+        &circuit_secondary,
+        start_public_input,
+        z0_secondary,
+    );
+
+    assert!(res.is_ok());
+
+    fs::remove_file(witness_generator_output)?;
+
+    Ok(recursive_snark)
+}

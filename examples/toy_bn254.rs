@@ -1,7 +1,8 @@
 use std::{collections::HashMap, env::current_dir, time::Instant};
 
 use nova_scotia::{
-    circom::reader::load_r1cs, create_public_params, create_recursive_circuit, FileLocation, F, S,
+    add_step, circom::reader::load_r1cs, create_public_params, create_recursive_circuit,
+    FileLocation, F, S,
 };
 use nova_snark::{
     provider,
@@ -58,9 +59,9 @@ fn run_test(circuit_filepath: String, witness_gen_filepath: String) {
 
     println!("Creating a RecursiveSNARK...");
     let start = Instant::now();
-    let recursive_snark = create_recursive_circuit(
-        FileLocation::PathBuf(witness_generator_file),
-        r1cs,
+    let mut recursive_snark = create_recursive_circuit(
+        FileLocation::PathBuf(witness_generator_file.clone()),
+        r1cs.clone(),
         private_inputs,
         start_public_input.to_vec(),
         &pp,
@@ -81,6 +82,11 @@ fn run_test(circuit_filepath: String, witness_gen_filepath: String) {
         start.elapsed()
     );
     assert!(res.is_ok());
+
+    let z_last = res.unwrap().0;
+
+    assert_eq!(z_last[0], F::<G1>::from(20));
+    assert_eq!(z_last[1], F::<G1>::from(70));
 
     // produce a compressed SNARK
     println!("Generating a CompressedSNARK using Spartan with IPA-PC...");
@@ -110,6 +116,43 @@ fn run_test(circuit_filepath: String, witness_gen_filepath: String) {
         start.elapsed()
     );
     assert!(res.is_ok());
+
+    // add a further step to the IVC
+    println!("Adding a new step to our RecursiveSNARK...");
+    let start = Instant::now();
+
+    // private input for the next step
+    let mut private_input_next = HashMap::new();
+    private_input_next.insert("adder".to_string(), json!(5));
+
+    let res = add_step(
+        &mut recursive_snark,
+        z_last,
+        FileLocation::PathBuf(witness_generator_file),
+        r1cs,
+        private_input_next,
+        start_public_input.to_vec(),
+        &pp,
+    );
+    assert!(res.is_ok());
+    println!(
+        "Adding a step to our recursive Verifier took {:?}",
+        start.elapsed()
+    );
+
+    // verify the recursive SNARK with the added step
+    println!("Verifying a RecursiveSNARK...");
+    let start = Instant::now();
+    let res = recursive_snark.verify(&pp, iteration_count + 1, &start_public_input, &z0_secondary);
+    println!(
+        "RecursiveSNARK::verify: {:?}, took {:?}",
+        res,
+        start.elapsed()
+    );
+    assert!(res.is_ok());
+
+    assert_eq!(res.clone().unwrap().0[0], F::<G1>::from(25));
+    assert_eq!(res.unwrap().0[1], F::<G1>::from(90));
 }
 
 fn main() {
