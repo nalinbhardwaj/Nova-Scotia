@@ -378,7 +378,7 @@ pub async fn continue_recursive_circuit<G1, G2>(
     last_zi: Vec<F<G1>>,
     witness_generator_file: FileLocation,
     r1cs: R1CS<F<G1>>,
-    private_input: Vec<HashMap<String, Value>>,
+    private_inputs: Vec<HashMap<String, Value>>,
     start_public_input: Vec<F<G1>>,
     pp: &PublicParams<G1, G2, C1<G1>, C2<G2>>,
 ) -> Result<(), std::io::Error>

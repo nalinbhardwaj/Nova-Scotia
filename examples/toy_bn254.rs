@@ -143,7 +143,7 @@ fn run_test(circuit_filepath: String, witness_gen_filepath: String) {
     // verify the recursive SNARK with the added steps
     println!("Verifying a RecursiveSNARK...");
     let start = Instant::now();
-    let res = recursive_snark.verify(&pp, iteration_count + 2, &start_public_input, &z0_secondary);
+    let res = recursive_snark.verify(&pp, iteration_count + iteration_count_continue, &start_public_input, &z0_secondary);
     println!(
         "RecursiveSNARK::verify: {:?}, took {:?}",
         res,
