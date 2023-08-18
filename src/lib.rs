@@ -311,12 +311,12 @@ where
 }
 
 #[cfg(not(target_family = "wasm"))]
-pub fn add_step<G1, G2>(
+pub fn continue_recursive_circuit<G1, G2>(
     recursive_snark: &mut RecursiveSNARK<G1, G2, C1<G1>, C2<G2>>,
     last_zi: Vec<F<G1>>,
     witness_generator_file: FileLocation,
     r1cs: R1CS<F<G1>>,
-    private_input: HashMap<String, Value>,
+    private_inputs: Vec<HashMap<String, Value>>,
     start_public_input: Vec<F<G1>>,
     pp: &PublicParams<G1, G2, C1<G1>, C2<G2>>,
 ) -> Result<(), std::io::Error>
@@ -327,34 +327,45 @@ where
     let root = current_dir().unwrap();
     let witness_generator_output = root.join("circom_witness.wtns");
 
-    let current_public_input = last_zi
+    let iteration_count = private_inputs.len();
+
+    let mut current_public_input = last_zi
         .iter()
         .map(|&x| format!("{:?}", x).strip_prefix("0x").unwrap().to_string())
         .collect::<Vec<String>>();
 
-    let witness = compute_witness::<G1, G2>(
-        current_public_input,
-        private_input,
-        witness_generator_file,
-        &witness_generator_output,
-    );
-
-    let circuit = CircomCircuit {
-        r1cs,
-        witness: Some(witness),
-    };
     let circuit_secondary = TrivialTestCircuit::default();
     let z0_secondary = vec![G2::Scalar::ZERO];
 
-    let res = recursive_snark.prove_step(
-        pp,
-        &circuit,
-        &circuit_secondary,
-        start_public_input,
-        z0_secondary,
-    );
+    for i in 0..iteration_count {
+        let witness = compute_witness::<G1, G2>(
+            current_public_input.clone(),
+            private_inputs[i].clone(),
+            witness_generator_file.clone(),
+            &witness_generator_output,
+        );
 
-    assert!(res.is_ok());
+        let circuit = CircomCircuit {
+            r1cs: r1cs.clone(),
+            witness: Some(witness),
+        };
+
+        let current_public_output = circuit.get_public_outputs();
+        current_public_input = current_public_output
+            .iter()
+            .map(|&x| format!("{:?}", x).strip_prefix("0x").unwrap().to_string())
+            .collect();
+
+        let res = recursive_snark.prove_step(
+            pp,
+            &circuit,
+            &circuit_secondary,
+            start_public_input.clone(),
+            z0_secondary.clone(),
+        );
+
+        assert!(res.is_ok());
+    }
 
     fs::remove_file(witness_generator_output)?;
 
@@ -362,12 +373,12 @@ where
 }
 
 #[cfg(target_family = "wasm")]
-pub async fn add_step<G1, G2>(
+pub async fn continue_recursive_circuit<G1, G2>(
     recursive_snark: &mut RecursiveSNARK<G1, G2, C1<G1>, C2<G2>>,
     last_zi: Vec<F<G1>>,
     witness_generator_file: FileLocation,
     r1cs: R1CS<F<G1>>,
-    private_input: HashMap<String, Value>,
+    private_input: Vec<HashMap<String, Value>>,
     start_public_input: Vec<F<G1>>,
     pp: &PublicParams<G1, G2, C1<G1>, C2<G2>>,
 ) -> Result<(), std::io::Error>
@@ -378,35 +389,46 @@ where
     let root = current_dir().unwrap();
     let witness_generator_output = root.join("circom_witness.wtns");
 
-    let current_public_input = last_zi
+    let iteration_count = private_inputs.len();
+
+    let mut current_public_input = last_zi
         .iter()
         .map(|&x| format!("{:?}", x).strip_prefix("0x").unwrap().to_string())
         .collect::<Vec<String>>();
 
-    let witness = compute_witness::<G1, G2>(
-        current_public_input,
-        private_input,
-        witness_generator_file,
-        &witness_generator_output,
-    )
-    .await;
-
-    let circuit = CircomCircuit {
-        r1cs,
-        witness: Some(witness),
-    };
     let circuit_secondary = TrivialTestCircuit::default();
     let z0_secondary = vec![G2::Scalar::ZERO];
 
-    let res = recursive_snark.prove_step(
-        pp,
-        &circuit,
-        &circuit_secondary,
-        start_public_input,
-        z0_secondary,
-    );
+    for i in 0..iteration_count {
+        let witness = compute_witness::<G1, G2>(
+            current_public_input.clone(),
+            private_inputs[i].clone(),
+            witness_generator_file.clone(),
+            &witness_generator_output,
+        )
+        .await;
 
-    assert!(res.is_ok());
+        let circuit = CircomCircuit {
+            r1cs: r1cs.clone(),
+            witness: Some(witness),
+        };
+
+        let current_public_output = circuit.get_public_outputs();
+        current_public_input = current_public_output
+            .iter()
+            .map(|&x| format!("{:?}", x).strip_prefix("0x").unwrap().to_string())
+            .collect();
+
+        let res = recursive_snark.prove_step(
+            pp,
+            &circuit,
+            &circuit_secondary,
+            start_public_input.clone(),
+            z0_secondary.clone(),
+        );
+
+        assert!(res.is_ok());
+    }
 
     fs::remove_file(witness_generator_output)?;
 
