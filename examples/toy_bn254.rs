@@ -1,14 +1,10 @@
 use std::{collections::HashMap, env::current_dir, time::Instant};
 
 use nova_scotia::{
-    circom::reader::load_r1cs, create_public_params, create_recursive_circuit, FileLocation, F, S,
+    circom::reader::load_r1cs, continue_recursive_circuit, create_public_params,
+    create_recursive_circuit, FileLocation, F, S,
 };
-use nova_snark::{
-    provider,
-    traits::{circuit::StepCircuit, Group},
-    CompressedSNARK, PublicParams,
-};
-use pasta_curves::group::ff::Field;
+use nova_snark::{provider, CompressedSNARK, PublicParams};
 use serde_json::json;
 
 fn run_test(circuit_filepath: String, witness_gen_filepath: String) {
@@ -58,9 +54,9 @@ fn run_test(circuit_filepath: String, witness_gen_filepath: String) {
 
     println!("Creating a RecursiveSNARK...");
     let start = Instant::now();
-    let recursive_snark = create_recursive_circuit(
-        FileLocation::PathBuf(witness_generator_file),
-        r1cs,
+    let mut recursive_snark = create_recursive_circuit(
+        FileLocation::PathBuf(witness_generator_file.clone()),
+        r1cs.clone(),
         private_inputs,
         start_public_input.to_vec(),
         &pp,
@@ -81,6 +77,11 @@ fn run_test(circuit_filepath: String, witness_gen_filepath: String) {
         start.elapsed()
     );
     assert!(res.is_ok());
+
+    let z_last = res.unwrap().0;
+
+    assert_eq!(z_last[0], F::<G1>::from(20));
+    assert_eq!(z_last[1], F::<G1>::from(70));
 
     // produce a compressed SNARK
     println!("Generating a CompressedSNARK using Spartan with IPA-PC...");
@@ -110,6 +111,48 @@ fn run_test(circuit_filepath: String, witness_gen_filepath: String) {
         start.elapsed()
     );
     assert!(res.is_ok());
+
+    // continue recursive circuit by adding 2 further steps
+    println!("Adding steps to our RecursiveSNARK...");
+    let start = Instant::now();
+
+    let iteration_count_continue = 2;
+
+    let mut private_inputs_continue = Vec::new();
+    for i in 0..iteration_count_continue {
+        let mut private_input = HashMap::new();
+        private_input.insert("adder".to_string(), json!(5 + i));
+        private_inputs_continue.push(private_input);
+    }
+
+    let res = continue_recursive_circuit(
+        &mut recursive_snark,
+        z_last,
+        FileLocation::PathBuf(witness_generator_file),
+        r1cs,
+        private_inputs_continue,
+        start_public_input.to_vec(),
+        &pp,
+    );
+    assert!(res.is_ok());
+    println!(
+        "Adding 2 steps to our RecursiveSNARK took {:?}",
+        start.elapsed()
+    );
+
+    // verify the recursive SNARK with the added steps
+    println!("Verifying a RecursiveSNARK...");
+    let start = Instant::now();
+    let res = recursive_snark.verify(&pp, iteration_count + iteration_count_continue, &start_public_input, &z0_secondary);
+    println!(
+        "RecursiveSNARK::verify: {:?}, took {:?}",
+        res,
+        start.elapsed()
+    );
+    assert!(res.is_ok());
+
+    assert_eq!(res.clone().unwrap().0[0], F::<G1>::from(31));
+    assert_eq!(res.unwrap().0[1], F::<G1>::from(115));
 }
 
 fn main() {
