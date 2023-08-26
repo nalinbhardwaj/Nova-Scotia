@@ -5,7 +5,6 @@ use ff::PrimeField;
 use js_sys::Uint8Array;
 use nova_snark::traits::Group;
 use std::io::Cursor;
-use std::path::Path;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
@@ -61,7 +60,6 @@ where
 pub async fn generate_witness_from_wasm<Fr: PrimeField>(
     witness_wasm: &FileLocation,
     witness_input_json: &String,
-    _witness_output: &Path, // note: this is unused
 ) -> Vec<Fr> {
     let witness_wasm = match witness_wasm {
         FileLocation::PathBuf(_) => panic!("unreachable"),

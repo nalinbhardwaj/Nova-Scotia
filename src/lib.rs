@@ -110,7 +110,6 @@ async fn compute_witness<G1, G2>(
     current_public_input: Vec<String>,
     private_input: HashMap<String, Value>,
     witness_generator_file: FileLocation,
-    witness_generator_output: &Path,
 ) -> Vec<<G1 as Group>::Scalar>
 where
     G1: Group<Base = <G2 as Group>::Scalar>,
@@ -136,10 +135,11 @@ where
         generate_witness_from_wasm::<F<G1>>(
             &witness_generator_file,
             &input_json,
-            &witness_generator_output,
         )
         .await
     } else {
+        let root = current_dir().unwrap(); // compute path only when generating witness from a binary
+        let witness_generator_output = root.join("circom_witness.wtns");
         let witness_generator_file = match &witness_generator_file {
             FileLocation::PathBuf(path) => path,
             FileLocation::URL(_) => panic!("unreachable"),
@@ -242,8 +242,6 @@ where
     G1: Group<Base = <G2 as Group>::Scalar>,
     G2: Group<Base = <G1 as Group>::Scalar>,
 {
-    let root = current_dir().unwrap();
-    let witness_generator_output = root.join("circom_witness.wtns");
 
     let iteration_count = private_inputs.len();
 
@@ -257,7 +255,6 @@ where
         current_public_input.clone(),
         private_inputs[0].clone(),
         witness_generator_file.clone(),
-        &witness_generator_output,
     )
     .await;
 
@@ -281,7 +278,6 @@ where
             current_public_input.clone(),
             private_inputs[i].clone(),
             witness_generator_file.clone(),
-            &witness_generator_output,
         )
         .await;
 
@@ -305,7 +301,6 @@ where
         );
         assert!(res.is_ok());
     }
-    fs::remove_file(witness_generator_output)?;
 
     Ok(recursive_snark)
 }
@@ -404,7 +399,6 @@ where
             current_public_input.clone(),
             private_inputs[i].clone(),
             witness_generator_file.clone(),
-            &witness_generator_output,
         )
         .await;
 
