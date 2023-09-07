@@ -69,7 +69,7 @@
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",
-    "build:wasm": "cd ../circuits && wasm-pack build --target web --out-dir ../client/public/pkg"
+    "build:wasm": "cd ../ && wasm-pack build --target web --out-dir ./test-client/public/pkg"
   },
   "eslintConfig": {
     "extends": [
