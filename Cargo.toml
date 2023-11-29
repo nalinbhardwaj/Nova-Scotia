@@ -1,39 +1,40 @@
 [package]
-name = "nova-scotia"
-version = "0.5.0"
-edition = "2021"
-authors = ["Nalin <novascotia@nibnalin.me>"]
-description = "Middleware to compile Circom circuits to Nova zkSNARK scheme"
+name          = "nova-scotia"
+version       = "0.5.0"
+edition       = "2021"
+authors       = ["Nalin <novascotia@nibnalin.me>"]
+description   = "Middleware to compile Circom circuits to Nova zkSNARK scheme"
 documentation = "https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/README.md"
-readme = "README.md"
-repository = "https://github.com/nalinbhardwaj/Nova-Scotia"
-license-file = "LICENSE"
-keywords = ["zkSNARKs", "cryptography", "proofs"]
+readme        = "README.md"
+repository    = "https://github.com/nalinbhardwaj/Nova-Scotia"
+license-file  = "LICENSE"
+keywords      = ["zkSNARKs", "cryptography", "proofs"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.65"
-bellperson = { version = "0.25", default-features = false }
-byteorder = "1.4.3"
-ff = { version = "0.13", features = ["derive"]}
-hex-literal = "0.3.4"
-itertools = "0.9.0"
-nova-snark = "0.23.0"
-num-bigint = { version = "0.4", features = ["serde", "rand"] }
-num-traits = "0.2.15"
-pasta_curves = "0.5"
-serde = "1.0"
-serde_json = "1.0.85"
+anyhow          = "1.0.65"
+bellperson      = { version = "0.25", default-features = false }
+bellpepper-core = "*"
+byteorder       = "1.4.3"
+ff              = { version = "0.13", features = ["derive"] }
+hex-literal     = "0.3.4"
+itertools       = "0.9.0"
+nova-snark      = "0.24.0"
+num-bigint      = { version = "0.4", features = ["serde", "rand"] }
+num-traits      = "0.2.15"
+pasta_curves    = "0.5"
+serde           = "1.0"
+serde_json      = "1.0.85"
 
 [target.'cfg(target_family = "wasm")'.dependencies]
-wasm-bindgen = { version = "0.2.81", features = ["serde-serialize"]}
-rayon = "1.5"
-wasm-bindgen-rayon = { version = "1.0"}
+wasm-bindgen         = { version = "0.2.81", features = ["serde-serialize"] }
+rayon                = "1.5"
+wasm-bindgen-rayon   = { version = "1.0" }
 wasm-bindgen-futures = "0.4"
-js-sys = "0.3"
+js-sys               = "0.3"
 
 [features]
 default = []
-cuda = ["nova-snark/cuda"]
-opencl = ["nova-snark/opencl"]
+cuda    = ["nova-snark/cuda"]
+opencl  = ["nova-snark/opencl"]
