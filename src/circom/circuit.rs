@@ -1,14 +1,10 @@
-// use bellperson::gadgets::num::AllocatedNum;
 use bellpepper_core::num::AllocatedNum;
-use bellpepper_core::ConstraintSystem;
-use bellpepper_core::LinearCombination;
-use bellpepper_core::SynthesisError;
+use bellpepper_core::{ConstraintSystem, LinearCombination, SynthesisError};
 use nova_snark::traits::circuit::StepCircuit;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::str;
 
-// use bellperson::{ConstraintSystem, LinearCombination, SynthesisError};
 use ff::PrimeField;
 
 #[derive(Serialize, Deserialize)]
@@ -164,8 +160,4 @@ impl<'a, Fr: PrimeField> StepCircuit<Fr> for CircomCircuit<Fr> {
 
         z_out
     }
-
-    // fn output(&self, _z: &[Fr]) -> Vec<Fr> {
-    //     self.get_public_outputs()
-    // }
 }
