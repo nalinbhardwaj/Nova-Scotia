@@ -5,7 +5,7 @@ use nova_scotia::{
     create_public_params, create_recursive_circuit, FileLocation, F, S,
 };
 use nova_snark::{
-    traits::{circuit::TrivialTestCircuit, Group},
+    traits::{circuit::TrivialCircuit, Group},
     CompressedSNARK, PublicParams,
 };
 use serde_json::json;
