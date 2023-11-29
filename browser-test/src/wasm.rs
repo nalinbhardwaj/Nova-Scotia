@@ -5,7 +5,7 @@ use nova_scotia::{
     create_public_params, create_recursive_circuit, FileLocation, F, S,
 };
 use nova_snark::{
-    traits::{circuit::TrivialTestCircuit, Group},
+    traits::{circuit::TrivialCircuit, Group},
     CompressedSNARK, PublicParams,
 };
 use serde_json::json;
@@ -81,7 +81,7 @@ pub async fn generate_proof(pp_str: String) -> String {
     let start_public_input = [F::<G1>::from(10), F::<G1>::from(10)];
 
     let pp = serde_json::from_str::<
-        PublicParams<G1, G2, CircomCircuit<F<G1>>, TrivialTestCircuit<F<G2>>>,
+        PublicParams<G1, G2, CircomCircuit<F<G1>>, TrivialCircuit<F<G2>>>,
     >(&pp_str)
     .unwrap();
 
@@ -134,7 +134,7 @@ pub async fn generate_proof(pp_str: String) -> String {
 #[wasm_bindgen]
 pub async fn verify_compressed_proof(pp_str: String, proof_str: String) -> bool {
     let pp = serde_json::from_str::<
-        PublicParams<G1, G2, CircomCircuit<F<G1>>, TrivialTestCircuit<F<G2>>>,
+        PublicParams<G1, G2, CircomCircuit<F<G1>>, TrivialCircuit<F<G2>>>,
     >(&pp_str)
     .unwrap();
     let (_pk, vk) = CompressedSNARK::<_, _, _, _, S<G1>, S<G2>>::setup(&pp).unwrap();
@@ -143,7 +143,7 @@ pub async fn verify_compressed_proof(pp_str: String, proof_str: String) -> bool 
     let z0_secondary = vec![F::<G2>::zero()];
 
     let compressed_proof = serde_json::from_str::<
-        CompressedSNARK<G1, G2, CircomCircuit<F<G1>>, TrivialTestCircuit<F<G2>>, S<G1>, S<G2>>,
+        CompressedSNARK<G1, G2, CircomCircuit<F<G1>>, TrivialCircuit<F<G2>>, S<G1>, S<G2>>,
     >(&proof_str)
     .unwrap();
     let res = compressed_proof.verify(
