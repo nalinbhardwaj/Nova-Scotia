@@ -1,5 +1,4 @@
-use bellpepper_core::num::AllocatedNum;
-use bellpepper_core::{ConstraintSystem, LinearCombination, SynthesisError};
+use bellpepper_core::{num::AllocatedNum, ConstraintSystem, LinearCombination, SynthesisError};
 use nova_snark::traits::circuit::StepCircuit;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;

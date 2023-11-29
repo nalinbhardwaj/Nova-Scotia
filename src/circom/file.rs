@@ -4,7 +4,6 @@
 use crate::circom::circuit::Constraint;
 use byteorder::{LittleEndian, ReadBytesExt};
 use ff::PrimeField;
-use hex_literal::hex;
 use nova_snark::traits::Group;
 use std::{
     collections::HashMap,
