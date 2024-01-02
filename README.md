@@ -96,6 +96,8 @@ toy.rs is a [very simple toy step circuit](https://github.com/nalinbhardwaj/Nova
 
 ### [`bitcoin.rs`](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin.rs)
 
+> Run the [bitcoin example](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin/)
+
 bitcoin.rs is a more complex example that uses Nova to create a prover for bitcoin chain proof-of-work. For nearly the cost of just one block proof-of-work verification, Nova can compress the verification of the entire bitcoin chain. [The Circom circuit is more complex](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin/circom/bitcoin.circom) for this construction (since it runs hashing and other bit-twiddling to verify each block in ~150k constraints). This is also helpful to look at for [benchmarking](https://github.com/nalinbhardwaj/Nova-Scotia/blob/main/examples/bitcoin.rs#L23) purposes, since you can play around with the number of blocks verified in each step of recursion. Here are some simple benchmarks for different configurations of recursion for 120 blocks being proven and verified:
 
 | Number of recursion steps | Blocks verified per step | Prover time | Verifier time (uncompressed) |
