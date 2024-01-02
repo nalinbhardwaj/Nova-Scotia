@@ -1,7 +1,7 @@
 # Getting Started with the `bitcoin` Example
 
 ### 1. Install Packages
-Before running the `bitcoin` example, you need to install the necessary packages such as circomlib. Navigate to the `circom` directory and use yarn (or npm) for installation:
+Before running the bitcoin example, you need to install the necessary packages such as `circomlib`. Navigate to the circom directory and use yarn (or npm) for installation:
 
 ```sh
 #!/bin/bash
@@ -11,7 +11,7 @@ yarn # Alternatively, use npm install (npm i)
 ```
 
 ### 2. Run the script for compiling C++ witness generator
-When running the compile script, add `BLOCK_COUNT`` as an argument.
+When running the compile script, add `BLOCK_COUNT` as an argument.
 ```sh
 #!/bin/bash
 
@@ -19,7 +19,7 @@ When running the compile script, add `BLOCK_COUNT`` as an argument.
 sh ./examples/bitcoin/circom/compile.sh 120
 ```
 
-Note: If you encounter a "ghead: not found" error, try installing `coreutils`` or use the `head` command instead of `ghead` in `compile.sh`. Both commands provide the same functionality.
+Note: If you encounter a "ghead: not found" error, try installing `coreutils` or use the `head` command instead of `ghead` in `compile.sh`. Both commands provide the same functionality.
 ```sh
 # In examples/bitcoin/circom/compile.sh
 
