@@ -381,9 +381,6 @@ where
     G1: Group<Base = <G2 as Group>::Scalar>,
     G2: Group<Base = <G1 as Group>::Scalar>,
 {
-    let root = current_dir().unwrap();
-    let witness_generator_output = root.join("circom_witness.wtns");
-
     let iteration_count = private_inputs.len();
 
     let mut current_public_input = last_zi
@@ -423,8 +420,6 @@ where
 
         assert!(res.is_ok());
     }
-
-    fs::remove_file(witness_generator_output)?;
 
     Ok(())
 }
